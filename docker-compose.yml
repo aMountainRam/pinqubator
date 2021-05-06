@@ -1,0 +1,30 @@
+version: '3'
+
+services:
+    reverse-proxy:
+        networks:
+            - ring
+        hostname: inqubator.com
+        ports:
+            - 80:80
+            - 443:443
+        build: ./reverse-proxy
+        volumes:
+            - ./reverse-proxy/html:/usr/share/nginx/html
+            - ./reverse-proxy/conf/includes:/etc/nginx/includes
+    backend:
+        networks:
+            - ring
+        build: ./backend
+        ports:
+            - 8080:8080
+            # - backend-network
+        # depends_on:
+        #     - instants-db
+    # instants-db:
+    #     networks:
+    #         - backend-network
+
+networks:
+    ring:
+#     backend-network:

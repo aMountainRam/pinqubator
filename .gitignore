@@ -1,3 +1,8 @@
+# ignore the Certificate Authority
+ca/
+./**/*.pem
+./**/*.key
+
 # Logs
 logs
 *.log
