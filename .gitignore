@@ -1,7 +1,9 @@
 # ignore the Certificate Authority
 ca/
-./**/*.pem
-./**/*.key
+*.pem
+*.key
+*.crt
+ssl_passwords.txt
 
 # Logs
 logs
