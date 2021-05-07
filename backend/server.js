@@ -2,7 +2,8 @@
 import fs from "fs";
 import https from "https";
 import express from "express";
-import mongoose from "mongoose";
+import log from "./conf/log.conf.js";
+import db from "./model/db.model.js";
 
 const DBHOST = process.env.DBHOST;
 const DBPORT = process.env.DBPORT;
@@ -14,7 +15,7 @@ const sslContext = {
     passphrase: fs.readFileSync("ssl/ssl_passwords.txt").toString(),
 };
 var connected = false;
-mongoose
+db.mongoose
     .connect(`mongodb://${DBHOST}:${DBPORT}/test`, {
         ssl: true,
         sslValidate: SSL_VALIDATE,
@@ -25,7 +26,7 @@ mongoose
         useNewUrlParser: true,
         useUnifiedTopology: true,
     })
-    .then(() => connected = true)
+    .then(() => log.info(`Connected to mongodb://${DBHOST}:${DBPORT}/test`))
     .catch((err) => {
         console.log(err);
         process.exit(1);
