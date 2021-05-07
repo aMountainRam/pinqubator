@@ -1,8 +1,10 @@
 FROM mongo:latest
+
+ARG environment
 RUN mkdir -p /etc/mongo
-COPY ./mongo/mongod.conf /etc/mongo
+COPY ./mongo/${environment}.mongod.conf /etc/mongo/mongod.conf
 COPY ./ssl/* /etc/ssl/
-RUN chmod -R +r /etc/ssl
+RUN chmod -R +r /etc/ssl /etc/mongo
 
 ARG database
 ARG username

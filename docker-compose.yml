@@ -29,6 +29,7 @@ services:
         build:
             context: ./instants-db
             args:
+                environment: dev
                 database: test
                 username: root
                 password: qweasd
@@ -46,6 +47,7 @@ services:
         build:
             context: ./backend
             args:
+                username: root
                 dbhost: instants-db.pinqubator.com
                 dbport: 27017
         depends_on:

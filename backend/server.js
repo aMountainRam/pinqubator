@@ -4,6 +4,7 @@ import https from "https";
 import express from "express";
 import log from "./conf/log.conf.js";
 import db from "./model/db.model.js";
+import controller from "./controller/app.controller.js";
 
 const DBHOST = process.env.DBHOST;
 const DBPORT = process.env.DBPORT;
@@ -17,6 +18,7 @@ const sslContext = {
 var connected = false;
 db.mongoose
     .connect(`mongodb://${DBHOST}:${DBPORT}/test`, {
+        authMechanism: "MONGODB-X509",
         ssl: true,
         sslValidate: SSL_VALIDATE,
         sslCA: sslContext.ca,
@@ -34,7 +36,12 @@ db.mongoose
 
 const PORT = 8443;
 const app = express();
-app.get("/api", (req, res) => {
+const server = express();
+server.use("/api",app);
+app.use(express.json()) // for parsing application/json
+app.use(express.urlencoded({ extended: true })) // for parsing application/x-www-form-urlencoded
+controller(app);
+app.get("/", (req, res) => {
     res.send(`Welcome; Mongoose is ${connected ? "" : "not"} connected on ${DBHOST}:${DBPORT}`);
 });
 https
@@ -44,7 +51,7 @@ https
             cert: sslContext.cert,
             passphrase: sslContext.passphrase,
         },
-        app
+        server
     )
     .listen(PORT, () => {
         console.log(`Running on port ${PORT}`);
