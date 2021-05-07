@@ -4,7 +4,7 @@ function instant(db) {
     return db.Schema(
         {
             username: {
-                type: db.Types.ObjectId,
+                type: db.Schema.Types.ObjectId,
                 ref: "User",
                 required: true,
             },
