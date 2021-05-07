@@ -4,7 +4,7 @@ services:
     reverse-proxy:
         networks:
             - ring
-        hostname: inqubator.com
+        hostname: pinqubator.com
         ports:
             - 80:80
             - 443:443
@@ -12,19 +12,38 @@ services:
         volumes:
             - ./reverse-proxy/html:/usr/share/nginx/html
             - ./reverse-proxy/conf/includes:/etc/nginx/includes
+        depends_on:
+            - backend
     backend:
+        hostname: backend.pinqubator.com
+        ports:
+            - 8443:8443
         networks:
             - ring
-        build: ./backend
+            - backend-network
+        build:
+            context: ./backend
+            args:
+                dbhost: instants-db.pinqubator.com
+                dbport: 27017
+        depends_on:
+            - instants-db
+    instants-db:
+        hostname: instants-db.pinqubator.com
+        environment:
+            - "MONGO_INITDB_ROOT_USERNAME=root"
+            - "MONGO_INITDB_ROOT_PASSWORD=qweasd"
         ports:
-            - 8080:8080
-            # - backend-network
-        # depends_on:
-        #     - instants-db
-    # instants-db:
-    #     networks:
-    #         - backend-network
+            - 27017:27017
+        image: mongo
+        volumes:
+            - instants-volume:/data/db
+        networks:
+            - backend-network
 
 networks:
     ring:
-#     backend-network:
+    backend-network:
+
+volumes:
+    instants-volume:
