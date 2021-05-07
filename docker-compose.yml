@@ -24,12 +24,14 @@ services:
             context: ./broker
     instants-db:
         hostname: instants-db.pinqubator.com
-        environment:
-            - "MONGO_INITDB_ROOT_USERNAME=root"
-            - "MONGO_INITDB_ROOT_PASSWORD=qweasd"
         ports:
             - 27017:27017
-        image: mongo
+        build:
+            context: ./instants-db
+            args:
+                database: test
+                username: root
+                password: qweasd
         volumes:
             - instants-volume:/data/db
         networks:

@@ -5,13 +5,14 @@
   "main": "server.js",
   "type": "module",
   "scripts": {
-    "start": "node server.js",
+    "dev": "NODE_ENV=dev DBHOST=localhost DBPORT=27017 nodemon server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "express": "^4.17.1"
+    "express": "^4.17.1",
+    "mongoose": "^5.12.7"
   },
   "devDependencies": {
     "mocha": "^8.3.2",

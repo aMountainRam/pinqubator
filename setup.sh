@@ -45,13 +45,13 @@ create_certs() {
 		-subj '/C=IT/ST=Brescia/L=Sirmione/O=A Mountain Ram & Co./OU=pinqubator/CN=PinQubator' \
 		-out $CA_DIR/requests/$1.csr
 	cat <<EOF >$CA_DIR/extensions/$1.ext
-	authorityKeyIdentifier=keyid,issuer
-	basicConstraints=CA:FALSE
-	keyUsage=digitalSignature, nonRepudiation, keyEncipherment, dataEncipherment
-	subjectAltName = @alt_names
-	[alt_names]
-	DNS.1 = $1
-	DNS.2 = www.$1
+authorityKeyIdentifier=keyid,issuer
+basicConstraints=CA:FALSE
+keyUsage=digitalSignature, nonRepudiation, keyEncipherment, dataEncipherment
+subjectAltName = @alt_names
+[alt_names]
+DNS.1 = $1
+DNS.2 = www.$1
 EOF
 	openssl x509 \
 		-req -in $CA_DIR/requests/$1.csr \
@@ -66,6 +66,36 @@ EOF
 	echo -n "$PASSWORD_SITE" >$2/ssl_passwords.txt
 }
 
+create_certs_no_passphrase() {
+	openssl genrsa \
+		-out $CA_DIR/keys/$1.key 2048
+	openssl req \
+		-new -key $CA_DIR/keys/$1.key \
+		-subj '/C=IT/ST=Brescia/L=Sirmione/O=A Mountain Ram & Co./OU=pinqubator/CN=PinQubator' \
+		-out $CA_DIR/requests/$1.csr
+	cat <<EOF >$CA_DIR/extensions/$1.ext
+$SUBJECT
+authorityKeyIdentifier=keyid,issuer
+basicConstraints=CA:FALSE
+keyUsage=digitalSignature, nonRepudiation, keyEncipherment, dataEncipherment
+subjectAltName = @alt_names
+[alt_names]
+DNS.1 = $1
+DNS.2 = www.$1
+EOF
+	openssl x509 \
+		-req -in $CA_DIR/requests/$1.csr \
+		-passin pass:$PASSWORD_CA \
+		-CA $CA_DIR/$CANAME.pem \
+		-CAkey $CA_DIR/$CANAME.key \
+		-out $CA_DIR/certificates/$1.crt \
+		-days 365 -sha256 \
+		-CAcreateserial \
+		-extfile $CA_DIR/extensions/$1.ext
+	cp $CA_DIR/certificates/$1.crt $CA_DIR/keys/$1.key $2
+	echo -n "" >$2/ssl_passwords.txt
+}
+
 set_root_ca() {
 	for arg in ${@:1}; do
 		cp $CA_DIR/$CANAME.pem $arg
@@ -76,6 +106,7 @@ make_certs() {
 	SSL_NGINX_CONTEXT="$WORKDIR/reverse-proxy/conf/ssl"
 	SSL_BACKEND_CONTEXT="$WORKDIR/backend/ssl"
 	SSL_BROKER_CONTEXT="$WORKDIR/broker/ssl"
+	SSL_DB_CONTEXT="$WORKDIR/instants-db/ssl"
 	NAME=pinqubator.com
 	### nginx
 	[ -d $SSL_NGINX_CONTEXT ] && { rm -rf $SSL_NGINX_CONTEXT/*; }
@@ -86,8 +117,14 @@ make_certs() {
 	### broker
 	[ -d $SSL_BROKER_CONTEXT ] && { rm -rf $SSL_BROKER_CONTEXT/*; }
 	create_certs broker.$NAME $SSL_BROKER_CONTEXT
+	### instants-db
+	[ -d $SSL_DB_CONTEXT ] && { rm -rf $SSL_DB_CONTEXT/*; }
+	create_certs_no_passphrase instants-db.$NAME $SSL_DB_CONTEXT
+	### mongo has troubles with a private key with passphrase
+	cat $SSL_DB_CONTEXT/instants-db.$NAME.crt $SSL_DB_CONTEXT/instants-db.$NAME.key >$SSL_DB_CONTEXT/certificate.pem
+	rm $SSL_DB_CONTEXT/instants-db.$NAME.crt $SSL_DB_CONTEXT/instants-db.$NAME.key
 
-	set_root_ca $WORKDIR $SSL_NGINX_CONTEXT $SSL_BACKEND_CONTEXT $SSL_BROKER_CONTEXT
+	set_root_ca $WORKDIR $SSL_NGINX_CONTEXT $SSL_BACKEND_CONTEXT $SSL_BROKER_CONTEXT $SSL_DB_CONTEXT
 }
 
 #########

@@ -2,18 +2,46 @@
 import fs from "fs";
 import https from "https";
 import express from "express";
+import mongoose from "mongoose";
+
+const DBHOST = process.env.DBHOST;
+const DBPORT = process.env.DBPORT;
+const SSL_VALIDATE = process.env.NODE_ENV !== "dev";
+const sslContext = {
+    key: fs.readFileSync("ssl/backend.pinqubator.com.key"),
+    cert: fs.readFileSync("ssl/backend.pinqubator.com.crt"),
+    ca: fs.readFileSync("ssl/pinqubator-ca.pem"),
+    passphrase: fs.readFileSync("ssl/ssl_passwords.txt").toString(),
+};
+var connected = false;
+mongoose
+    .connect(`mongodb://${DBHOST}:${DBPORT}/test`, {
+        ssl: true,
+        sslValidate: SSL_VALIDATE,
+        sslCA: sslContext.ca,
+        sslKey: sslContext.key,
+        sslCert: sslContext.cert,
+        sslPass: sslContext.passphrase,
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+    })
+    .then(() => connected = true)
+    .catch((err) => {
+        console.log(err);
+        process.exit(1);
+    });
 
 const PORT = 8443;
 const app = express();
 app.get("/api", (req, res) => {
-    res.send("Welcome");
+    res.send(`Welcome; Mongoose is ${connected ? "" : "not"} connected on ${DBHOST}:${DBPORT}`);
 });
 https
     .createServer(
         {
-            key: fs.readFileSync("ssl/backend.pinqubator.com.key"),
-            cert: fs.readFileSync("ssl/backend.pinqubator.com.crt"),
-            passphrase: fs.readFileSync("ssl/ssl_passwords.txt").toString(),
+            key: sslContext.key,
+            cert: sslContext.cert,
+            passphrase: sslContext.passphrase,
         },
         app
     )
