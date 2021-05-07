@@ -1,56 +1,40 @@
 #!/bin/bash
 
-## build phase
-## directly invoked when certs is not specified
-
-build() {
-	#########
-	# Build #
-	#########
-	[ "$(cat /etc/group | grep $(logname) | grep -E 'docker|sudo' | wc -l)" -eq 0 ] && {
-		echo "user must be member of either sudo or docker groups"
-		exit 1
-	}
-	docker-compose build
-}
-
-[ ! "$1" = "certs" ] && {
-	build
-	exit 0
-}
-
-## certs phase
-## invoked when certs is specified
-
+####################
+# Global Variables #
+####################
 WORKDIR=$(dirname $0)
-########
-# VARS #
-########
 CANAME=pinqubator-ca
-PASSWORD_CA=$(openssl rand -base64 32)
+CA_DIR=$WORKDIR/ca
+generate_password() {
+	openssl rand -base64 29 | tr -d "=+/" | cut -c1-25
+}
+PASSWORD_CA=$(generate_password)
 
 ###########
 # CA Cert #
 ###########
-CA_DIR=$WORKDIR/ca
-mkdir -p $CA_DIR/{requests,certificates,extensions,keys}
-openssl genrsa \
-	-des3 \
-	-passout pass:$PASSWORD_CA \
-	-out $CA_DIR/$CANAME.key 2048
-openssl req \
-	-x509 -new -nodes \
-	-passin pass:$PASSWORD_CA \
-	-key $CA_DIR/$CANAME.key \
-	-sha256 -days 365 \
-	-subj '/C=IT/ST=Brescia/L=Sirmione/O=A Mountain Ram & Co./OU=pinqubator-ca/CN=PinQubator' \
-	-out $CA_DIR/$CANAME.pem
+create_ca() {
+	[ -d $CA_DIR ] && { rm -r $CA_DIR; }
+	mkdir -p $CA_DIR/{requests,certificates,extensions,keys}
+	openssl genrsa \
+		-des3 \
+		-passout pass:$PASSWORD_CA \
+		-out $CA_DIR/$CANAME.key 2048
+	openssl req \
+		-x509 -new -nodes \
+		-passin pass:$PASSWORD_CA \
+		-key $CA_DIR/$CANAME.key \
+		-sha256 -days 365 \
+		-subj '/C=IT/ST=Brescia/L=Sirmione/O=A Mountain Ram & Co./OU=pinqubator-ca/CN=PinQubator' \
+		-out $CA_DIR/$CANAME.pem
+}
 
+#############
+# Site Cert #
+#############
 create_certs() {
-	#############
-	# Site Cert #
-	#############
-	PASSWORD_SITE=$(openssl rand -base64 32)
+	PASSWORD_SITE=$(generate_password)
 	openssl genrsa \
 		-des3 \
 		-passout pass:$PASSWORD_SITE \
@@ -80,22 +64,75 @@ EOF
 		-extfile $CA_DIR/extensions/$1.ext
 	cp $CA_DIR/certificates/$1.crt $CA_DIR/keys/$1.key $2
 	echo -n "$PASSWORD_SITE" >$2/ssl_passwords.txt
-	cp $CA_DIR/$CANAME.pem $3
 }
 
-### nginx
-SSL_CONTEXT="$WORKDIR/reverse-proxy/conf/ssl"
-NAME=pinqubator.com
-[ -d $SSL_CONTEXT ] && { rm -rf $SSL_CONTEXT/*; }
-create_certs $NAME $SSL_CONTEXT $WORKDIR
-### backend
-SSL_NGINX_CONTEXT=$SSL_CONTEXT
-SSL_CONTEXT="$WORKDIR/backend/ssl"
-NAME=backend.pinqubator.com
-[ -d $SSL_CONTEXT ] && { rm -rf $SSL_CONTEXT/*; }
-create_certs $NAME $SSL_CONTEXT $SSL_NGINX_CONTEXT
+set_root_ca() {
+	for arg in ${@:1}; do
+		cp $CA_DIR/$CANAME.pem $arg
+	done
+}
 
-rm -r $CA_DIR
+make_certs() {
+	SSL_NGINX_CONTEXT="$WORKDIR/reverse-proxy/conf/ssl"
+	SSL_BACKEND_CONTEXT="$WORKDIR/backend/ssl"
+	SSL_BROKER_CONTEXT="$WORKDIR/broker/ssl"
+	NAME=pinqubator.com
+	### nginx
+	[ -d $SSL_NGINX_CONTEXT ] && { rm -rf $SSL_NGINX_CONTEXT/*; }
+	create_certs $NAME $SSL_NGINX_CONTEXT
+	### backend
+	[ -d $SSL_BACKEND_CONTEXT ] && { rm -rf $SSL_BACKEND_CONTEXT/*; }
+	create_certs backend.$NAME $SSL_BACKEND_CONTEXT
+	### broker
+	[ -d $SSL_BROKER_CONTEXT ] && { rm -rf $SSL_BROKER_CONTEXT/*; }
+	create_certs broker.$NAME $SSL_BROKER_CONTEXT
 
-### build
-build
+	set_root_ca $WORKDIR $SSL_NGINX_CONTEXT $SSL_BACKEND_CONTEXT $SSL_BROKER_CONTEXT
+}
+
+#########
+# Build #
+#########
+build() {
+	[ "$(cat /etc/group | grep $(logname) | grep -E 'docker|sudo' | wc -l)" -eq 0 ] && {
+		echo "user must be member of either sudo or docker groups"
+		exit 1
+	}
+	docker-compose build
+}
+
+MAKE_BUILD=true
+MAKE_CERTS=false
+REMOVE_CA=true
+LAUNCH_STOP=false
+for arg in "$@"; do
+	case $arg in
+	"certs")
+		MAKE_CERTS=true
+		;;
+	"keepCA")
+		REMOVE_CA=false
+		;;
+	"stop")
+		LAUNCH_STOP=true
+		echo "stopping... other arguments are ignored"
+		;;
+	*)
+		echo "cannot parse invalid argument $arg"
+		;;
+	esac
+done
+if [ "$LAUNCH_STOP" = true ]; then
+	docker-compose down
+	exit 0
+fi
+if [ "$MAKE_CERTS" = true ]; then
+	create_ca
+	make_certs
+fi
+if [ "$REMOVE_CA" = true ]; then
+	[ -d $CA_DIR ] && { rm -r $CA_DIR; }
+fi
+if [ "$MAKE_BUILD" = true ]; then
+	build
+fi

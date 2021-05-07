@@ -14,6 +14,26 @@ services:
             - ./reverse-proxy/conf/includes:/etc/nginx/includes
         depends_on:
             - backend
+    broker:
+        hostname: broker.pinqubator.com
+        networks:
+            - backend-network
+        ports:
+            - 5671:5671
+        build:
+            context: ./broker
+    instants-db:
+        hostname: instants-db.pinqubator.com
+        environment:
+            - "MONGO_INITDB_ROOT_USERNAME=root"
+            - "MONGO_INITDB_ROOT_PASSWORD=qweasd"
+        ports:
+            - 27017:27017
+        image: mongo
+        volumes:
+            - instants-volume:/data/db
+        networks:
+            - backend-network
     backend:
         hostname: backend.pinqubator.com
         ports:
@@ -28,18 +48,7 @@ services:
                 dbport: 27017
         depends_on:
             - instants-db
-    instants-db:
-        hostname: instants-db.pinqubator.com
-        environment:
-            - "MONGO_INITDB_ROOT_USERNAME=root"
-            - "MONGO_INITDB_ROOT_PASSWORD=qweasd"
-        ports:
-            - 27017:27017
-        image: mongo
-        volumes:
-            - instants-volume:/data/db
-        networks:
-            - backend-network
+            - broker
 
 networks:
     ring:
