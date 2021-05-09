@@ -12,13 +12,17 @@ function instant(db) {
                 type: String,
                 required: true,
             },
-            img: {
-                data: Buffer,
-                contentType: String,
+            image: {
+                buffer: Buffer,
+                encoding: String,
+                fieldname: String,
+                originalname: String,
+                mimetype: String,
+                size: Number
             },
             size: {
-                type: [Number],
-                required: true,
+                width: Number,
+                height: Number,
             },
             location: {
                 type: {

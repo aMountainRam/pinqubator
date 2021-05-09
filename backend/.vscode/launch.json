@@ -12,8 +12,10 @@
             "program": "${workspaceFolder}/server.js",
             "env": {
                 "NODE_ENV": "dev",
+                "NODE_PORT": "8443",
                 "DBHOST": "localhost",
-                "DBPORT": "27017"
+                "DBPORT": "27017",
+                "DBNAME": "instants-db"
             }
         },
         {

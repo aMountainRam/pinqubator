@@ -1,7 +1,7 @@
 "use strict";
 // set environment
 export const nodeEnv = process.env.NODE_ENV;
-export const serverPort = process.env.NODE_PORT;
+export const serverPort = process.env.NODE_PORT || 8443;
 
 // set log context
 import log from "./conf/log.conf.js";
@@ -47,6 +47,7 @@ db.connect(dbContext)
 
 // setup http server with applications
 import express from "express";
+import multer from "multer";
 // server holds context '/'
 export const server = express();
 // while api
@@ -57,7 +58,7 @@ server.use("/", express.static("public"));
 
 app.use(express.json()); // for parsing application/json
 app.use(express.urlencoded({ extended: true })); // for parsing application/x-www-form-urlencoded
-
+app.use(multer().any()); // for parsing multipart/form-data
 // inject controller
 import controller from "./controller/app.controller.js";
 controller(app);
