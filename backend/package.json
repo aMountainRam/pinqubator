@@ -1,22 +1,25 @@
 {
-  "name": "backend",
-  "version": "1.0.0",
-  "description": "",
-  "main": "server.js",
-  "type": "module",
-  "scripts": {
-    "dev": "NODE_ENV=dev DBHOST=localhost DBPORT=27017 nodemon server.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "author": "",
-  "license": "ISC",
-  "dependencies": {
-    "express": "^4.17.1",
-    "log4js": "^6.3.0",
-    "mongoose": "^5.12.7"
-  },
-  "devDependencies": {
-    "mocha": "^8.3.2",
-    "nodemon": "^2.0.7"
-  }
+    "name": "backend",
+    "version": "1.0.0",
+    "description": "",
+    "main": "server.js",
+    "type": "module",
+    "scripts": {
+        "dev": "NODE_ENV=dev NODE_PORT=8443 DBNAME=instants-db DBHOST=localhost DBPORT=27017 nodemon server.js",
+        "test": "NODE_ENV=dev NODE_PORT=8443 DBNAME=test DBHOST=localhost DBPORT=27017 mocha --timeout 60000 --exit --reporter spec ./test/**/*.tests.js"
+    },
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+        "express": "^4.17.1",
+        "log4js": "^6.3.0",
+        "mongoose": "^5.12.7"
+    },
+    "devDependencies": {
+        "chai": "^4.3.4",
+        "chai-http": "^4.3.0",
+        "mocha": "^8.3.2",
+        "nodemon": "^2.0.7",
+        "sinon": "^10.0.0"
+    }
 }
