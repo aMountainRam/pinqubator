@@ -10,12 +10,12 @@ const resources = "test/resources";
 
 let files = fs.readdirSync(resources);
 chai.use(chaiHttp);
-describe("multifile testing", () => {
-    beforeEach("clear instants collection", () => {
+describe("upload of multiple image files", () => {
+    beforeEach("clear instants and user collections", () => {
         db.mongoose.connection.db.dropCollection("instants");
         db.mongoose.connection.db.dropCollection("users");
     });
-    it(`should upload all resources`, async () => {
+    it("should upload all resources but store on DB only images which are smaller than 140x140px", async () => {
         await Promise.allSettled(
             files.map(async (filename, i) => {
                 let username = `username${i}`;

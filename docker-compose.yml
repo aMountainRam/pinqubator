@@ -20,6 +20,7 @@ services:
             - backend-network
         ports:
             - 5671:5671
+            - 15672:15672
         build:
             context: ./broker
     instants-db:

@@ -2,6 +2,9 @@
 // set environment
 export const nodeEnv = process.env.NODE_ENV;
 export const serverPort = process.env.NODE_PORT || 8443;
+if (process.env.DBNAME !== "pro") {
+    process.env.DBNAME += "-dev";
+}
 
 // set log context
 import log from "./conf/log.conf.js";
@@ -38,12 +41,29 @@ export const dbContext = {
     },
 };
 // and connect using provided context
-db.connect(dbContext)
+db.connect(dbContext, log)
     .then(() => log.info(`Connected to ${db.connectionString(dbContext)}`))
     .catch((err) => {
         console.log(err);
         process.exit(1);
     });
+
+export const brokerContext = {
+    host: process.env.BROKERHOST,
+    port: process.env.BROKERPORT,
+    queue: "resize",
+};
+import { brokerFactory } from "./service/broker.service.js";
+brokerFactory(
+    brokerContext,
+    {
+        cert: sslContext.cert,
+        key: sslContext.key,
+        passphrase: sslContext.passphrase,
+        ca: [sslContext.ca],
+    },
+    log
+);
 
 // setup http server with applications
 import express from "express";

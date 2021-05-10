@@ -43,9 +43,8 @@ const create = async (req, res) => {
             instant
                 .save(instant)
                 .then(() => res.status(200).send())
-                .catch((err) => {
-                    console.log(err);
-                    res.status(400).send(err);
+                .catch(() => {
+                    res.status(400).send("Malformed request");
                 });
         } catch (_) {
             res.status(400).send("Malformed request");

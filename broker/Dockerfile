@@ -1,4 +1,4 @@
-FROM rabbitmq:latest
+FROM rabbitmq:3-management
 COPY ./rabbitmq.conf /etc/rabbitmq
 COPY ./conf.sh /etc/ssl
 COPY ./ssl/broker.pinqubator.com.crt /etc/ssl/certs
