@@ -1,34 +1,50 @@
 import { httpsServer as server } from "../../server.js";
 import fs from "fs";
 import db from "../../model/db.model.js";
-import chai, { assert } from "chai";
+import chai, { expect } from "chai";
 import chaiHttp from "chai-http";
-import jpeg from "smallest-jpeg";
 
 // This line allows use with https
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+const resources = "test/resources";
 
+let files = fs.readdirSync(resources);
 chai.use(chaiHttp);
-describe("test https server startup", () => {
+describe("multifile testing", () => {
     beforeEach("clear instants collection", () => {
-        db.user.deleteMany({});
-        db.instant.deleteMany({});
+        db.mongoose.connection.db.dropCollection("instants");
+        db.mongoose.connection.db.dropCollection("users");
     });
-    describe("create an instant", () => {
-        it("should GET all users", (done) => {
-            chai.request(server)
-                .post("/api/instants/")
-                .set("Content-Type", "multipart/form-data")
-                .attach("image", fs.readFileSync("test/resources/star.png"), "star.png")
-                .field("username", "username1")
-                .field("lat", "0")
-                .field("long", "0")
-                .field("title", "title1")
-                .field("timestamp", new Date().toISOString())
-                .end((_, res) => {
-                    assert.strictEqual(res.status, 200);
-                    done();
-                });
+    it(`should upload all resources`, async () => {
+        await Promise.allSettled(
+            files.map(async (filename, i) => {
+                let username = `username${i}`;
+                let res = await chai
+                    .request(server)
+                    .post("/api/instants/")
+                    .set("Content-Type", "multipart/form-data")
+                    .attach(
+                        "image",
+                        fs.readFileSync(`${resources}/${filename}`),
+                        filename
+                    )
+                    .field("username", username)
+                    .field("lat", "0")
+                    .field("long", "0")
+                    .field("title", "title1")
+                    .field("timestamp", new Date().toISOString());
+                expect(res.statusCode).to.equal(200);
+                return res;
+            })
+        );
+        db.user.countDocuments({}, (_, count) => {
+            expect(count).to.equal(4);
         });
+        db.instant.countDocuments({}, (_, count) => {
+            expect(count).to.equal(4);
+        });
+        db.instant
+            .find({ image: { $exists: true } })
+            .then((data) => expect(data).to.have.lengthOf(2));
     });
 });

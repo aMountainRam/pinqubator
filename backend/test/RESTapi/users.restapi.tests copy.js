@@ -8,8 +8,8 @@ process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
 chai.use(chaiHttp);
 describe("test https server startup", () => {
-    beforeEach("clear instants collection", () => db.user.deleteMany({}));
-    describe("/GET users", () => {
+    beforeEach("clear users collection", () => db.user.deleteMany({}));
+    describe("GET users", () => {
         it("should GET all users", (done) => {
             chai.request(server)
                 .get("/api/users/")

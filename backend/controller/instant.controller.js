@@ -51,7 +51,6 @@ const create = async (req, res) => {
             res.status(400).send("Malformed request");
         }
     }
-    log.info(`POST ${req.body.thing}`);
 };
 
 const findAll = (req, res) => {
