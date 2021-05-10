@@ -63,9 +63,28 @@ const create = async (req, res) => {
     }
 };
 
+const findByUsername = (req, res) => {
+    if (!req.params || !req.params.username) {
+        res.status(400).send("Malformed request");
+    } else {
+        let username = req.params.username;
+        db.user.findOne({ username: username }).then((u) =>
+            db.instant
+                .find({ username: u._id })
+                .then((data) => {
+                    res.status(200).send(data);
+                })
+                .catch((err) => {
+                    log.error(err);
+                    res.status(400).send();
+                })
+        );
+    }
+};
+
 const findAll = (req, res) => {
     log.info(`GET ${req.body}`);
     res.status(200).send();
 };
 
-export const instantController = { create, findAll };
+export const instantController = { create, findAll, findByUsername };

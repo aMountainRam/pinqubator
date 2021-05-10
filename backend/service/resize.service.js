@@ -16,7 +16,7 @@ export const resize = (db, log, msg) => {
             db.instant.findOneAndUpdate(
                 { "image.jobId": msg.jobId },
                 { "image.buffer": buffer, "size": size }
-            );
+            ).catch(err => log.error(err));
         })
         .catch((err) => log.error(err));
 };
