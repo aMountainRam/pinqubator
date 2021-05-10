@@ -5,35 +5,19 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "type": "pwa-node",
+            "type": "node",
             "request": "launch",
             "name": "Launch Program",
             "skipFiles": ["<node_internals>/**"],
             "program": "${workspaceFolder}/server.js",
-            "env": {
-                "NODE_ENV": "dev",
-                "NODE_PORT": "8443",
-                "DBHOST": "localhost",
-                "DBPORT": "27017",
-                "DBNAME": "instants-db",
-                "BROKERHOST": "localhost",
-                "BROKERPORT": "5671"
-            }
+            "runtimeArgs": ["-r", "dotenv/config"],
+            "args": ["dotenv_config_path=${workspaceFolder}/.env.dev"]
         },
         {
             "type": "pwa-node",
             "request": "launch",
             "name": "Mocha Tests",
             "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
-            "env": {
-                "NODE_ENV": "dev",
-                "NODE_PORT": "8443",
-                "DBHOST": "localhost",
-                "DBPORT": "27017",
-                "DBNAME": "test",
-                "BROKERHOST": "localhost",
-                "BROKERPORT": "5671"
-            },
             "args": [
                 "--timeout",
                 "60000",
