@@ -1,8 +1,7 @@
 import amqp from "amqplib";
 
-let broker;
 export function brokerFactory(context, sslContext, log) {
-    broker = {
+    return {
         connectionString: `amqps://${context.host}:${context.port}`,
         openConnection: () =>
             amqp.connect(`amqps://${context.host}:${context.port}`, {
@@ -11,29 +10,33 @@ export function brokerFactory(context, sslContext, log) {
                 cert: [sslContext.cert],
                 passphrase: sslContext.passphrase,
             }),
-        sendToQueue: (open, msg) => {
-            return open.then((connection) => {
-                connection.createChannel().then((channel) => {
-                    let queue = context.queue;
-                    channel.assertQueue(queue, {
-                        durable: false,
-                    });
-                    channel.sendToQueue(queue, Buffer.from(msg));
-                    log.debug(" [x] Sent to %s", msg);
-                });
-            });
+        sendToQueue: (open, msg, queue = context.queue) => {
+            return open
+                .then((connection) => connection.createChannel())
+                .then((channel) =>
+                    channel
+                        .assertQueue(queue, { durable: true })
+                        .then(() =>
+                            channel.sendToQueue(queue, Buffer.from(msg))
+                        )
+                )
+                .catch((err) => log.error(err));
         },
-        consumeFromQueue: (open, callback) => {
-            return open.then((connection) => {
-                connection.createChannel().then((channel) => {
-                    let queue = context.queue;
+        consumeFromQueue: (open, callback, queue = context.queue) => {
+            return open
+                .then((connection) => connection.createChannel())
+                .then((channel) =>
                     channel.consume(queue, callback, {
                         noAck: true,
-                    });
-                });
-            });
+                    })
+                );
         },
     };
-    return broker;
 }
-export default broker;
+export function consumerFactory(broker,callback,log) {
+    return broker.consumeFromQueue(broker.openConnection(), (msg) => {
+        const jsonMessage = JSON.parse(msg.content.toString());
+        log.info(jsonMessage.jobId);
+        callback(jsonMessage);
+    });
+}

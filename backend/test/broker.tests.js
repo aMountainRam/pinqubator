@@ -20,12 +20,13 @@ describe("attempt connection to rabbitmq broker", () => {
         expect(broker.connectionString).to.contain("amqps");
     });
     it("should produce/consume hundreds messages", () => {
+        let connection = broker.openConnection();
         Array(256)
             .fill(0)
             .forEach((_, i) =>
-                broker.sendToQueue(broker.openConnection(), `message ${i}`)
+                broker.sendToQueue(connection, `message ${i}`)
             );
-        broker.consumeFromQueue(broker.openConnection(), (msg) => {
+        broker.consumeFromQueue(connection, (msg) => {
             expect(msg.content.toString()).to.match(/^message \d{1,3}$/);
         });
     });

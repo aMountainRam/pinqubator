@@ -5,8 +5,8 @@
     "main": "server.js",
     "type": "module",
     "scripts": {
-        "dev": "NODE_ENV=dev NODE_PORT=8443 DBNAME=instants-db DBHOST=localhost DBPORT=27017 nodemon server.js",
-        "test": "NODE_ENV=dev NODE_PORT=8443 DBNAME=test DBHOST=localhost DBPORT=27017 mocha --timeout 60000 --exit \"test/**/*.tests.js\""
+        "dev": "NODE_ENV=dev NODE_PORT=8443 DBNAME=instants-db DBHOST=localhost DBPORT=27017 BROKERNAME=localhost BROKERPORT=5671 nodemon server.js",
+        "test": "NODE_ENV=dev NODE_PORT=8443 DBNAME=test DBHOST=localhost DBPORT=27017 BROKERNAME=localhost BROKERPORT=5671 mocha --timeout 60000 --exit \"test/**/*.tests.js\""
     },
     "author": "",
     "license": "ISC",
@@ -17,7 +17,9 @@
         "log4js": "^6.3.0",
         "mongoose": "^5.12.7",
         "multer": "^1.4.2",
-        "smallest-jpeg": "^2.0.0"
+        "sharp": "^0.28.1",
+        "smallest-jpeg": "^2.0.0",
+        "uuid": "^8.3.2"
     },
     "devDependencies": {
         "chai": "^4.3.4",

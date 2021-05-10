@@ -1,4 +1,4 @@
-import { httpsServer as server } from "../../server.js";
+import { broker, httpsServer as server } from "../../server.js";
 import fs from "fs";
 import db from "../../model/db.model.js";
 import chai, { expect } from "chai";
@@ -11,9 +11,9 @@ const resources = "test/resources";
 let files = fs.readdirSync(resources);
 chai.use(chaiHttp);
 describe("upload of multiple image files", () => {
-    beforeEach("clear instants and user collections", () => {
-        db.mongoose.connection.db.dropCollection("instants");
-        db.mongoose.connection.db.dropCollection("users");
+    beforeEach("clear instants and user collections", async () => {
+        await db.mongoose.connection.db.dropCollection("instants");
+        await db.mongoose.connection.db.dropCollection("users");
     });
     it("should upload all resources but store on DB only images which are smaller than 140x140px", async () => {
         await Promise.allSettled(
@@ -37,14 +37,14 @@ describe("upload of multiple image files", () => {
                 return res;
             })
         );
-        db.user.countDocuments({}, (_, count) => {
+        await db.user.countDocuments({}, (_, count) => {
             expect(count).to.equal(4);
         });
-        db.instant.countDocuments({}, (_, count) => {
-            expect(count).to.equal(4);
-        });
-        db.instant
-            .find({ image: { $exists: true } })
+        await db.instant
+            .find({ "image.buffer": { $exists: true } })
             .then((data) => expect(data).to.have.lengthOf(2));
+        broker.consumeFromQueue(broker.openConnection(), (msg) =>
+            expect(msg.content.toString()).to.keys(["jobId", "buffer"])
+        );
     });
 });

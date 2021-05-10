@@ -1,6 +1,8 @@
 import db from "../model/db.model.js";
 import log from "../conf/log.conf.js";
 import sizeOf from "image-size";
+import { v4 as uuidv4 } from "uuid";
+import { broker } from "../server.js";
 const Instant = db.instant;
 
 const create = async (req, res) => {
@@ -36,7 +38,16 @@ const create = async (req, res) => {
                 instaObj.image = req.files[0];
             } else {
                 instaObj.image = req.files[0];
+                instaObj.image.jobId = uuidv4();
+                let buffer = instaObj.image.buffer;
                 delete instaObj.image.buffer;
+                broker.sendToQueue(
+                    broker.openConnection(),
+                    JSON.stringify({
+                        jobId: instaObj.image.jobId,
+                        buffer,
+                    })
+                );
                 // here to schedule a job !!
             }
             const instant = new Instant(instaObj);

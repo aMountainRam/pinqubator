@@ -3,6 +3,7 @@
 export const nodeEnv = process.env.NODE_ENV;
 export const serverPort = process.env.NODE_PORT || 8443;
 if (process.env.DBNAME !== "pro") {
+    process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
     process.env.DBNAME += "-dev";
 }
 
@@ -53,8 +54,9 @@ export const brokerContext = {
     port: process.env.BROKERPORT,
     queue: "resize",
 };
-import { brokerFactory } from "./service/broker.service.js";
-brokerFactory(
+import { brokerFactory, consumerFactory } from "./service/broker.service.js";
+import { resize } from "./service/resize.service.js"
+export const broker = brokerFactory(
     brokerContext,
     {
         cert: sslContext.cert,
@@ -64,6 +66,7 @@ brokerFactory(
     },
     log
 );
+export const consumer = consumerFactory(broker,(msg) => resize(db,log,msg),log);
 
 // setup http server with applications
 import express from "express";

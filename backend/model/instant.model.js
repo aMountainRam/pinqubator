@@ -13,6 +13,7 @@ function instant(db) {
                 required: true,
             },
             image: {
+                jobId: String,
                 buffer: Buffer,
                 encoding: String,
                 fieldname: String,

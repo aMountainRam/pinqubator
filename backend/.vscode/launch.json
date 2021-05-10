@@ -15,7 +15,9 @@
                 "NODE_PORT": "8443",
                 "DBHOST": "localhost",
                 "DBPORT": "27017",
-                "DBNAME": "instants-db"
+                "DBNAME": "instants-db",
+                "BROKERHOST": "localhost",
+                "BROKERPORT": "5671"
             }
         },
         {
@@ -29,6 +31,8 @@
                 "DBHOST": "localhost",
                 "DBPORT": "27017",
                 "DBNAME": "test",
+                "BROKERHOST": "localhost",
+                "BROKERPORT": "5671"
             },
             "args": [
                 "--timeout",
