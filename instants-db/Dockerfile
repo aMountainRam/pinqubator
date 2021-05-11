@@ -1,17 +1,15 @@
 FROM mongo:latest
 
-ARG environment
 RUN mkdir -p /etc/mongo
-COPY ./mongo/${environment}.mongod.conf /etc/mongo/mongod.conf
+COPY ./mongo/mongod.conf /etc
 COPY ./ssl/* /etc/ssl/
-RUN chmod -R +r /etc/ssl /etc/mongo
+RUN chmod -R a+r /etc/ssl /etc/mongod.conf
 
 ARG database
 ARG username
 ARG password
-
 ENV MONGO_INITDB_DATABASE=${database}
 ENV MONGO_INITDB_ROOT_USERNAME=${username}
 ENV MONGO_INITDB_ROOT_PASSWORD=${password}
-
-CMD [ "-f", "/etc/mongo/mongod.conf" ]
+EXPOSE 27017
+ENTRYPOINT ["/usr/bin/mongod", "--config", "/etc/mongod.conf"]

@@ -1,6 +1,11 @@
 FROM node:latest as build
+ARG https_port
+ENV HTTPS_PORT=${https_port}
+
 WORKDIR /app
 COPY . .
+RUN bash -c "echo -e \"\nREACT_APP_APIPORT=$HTTPS_PORT\"" >> ./.env
+RUN cat ./.env
 RUN yarn
 RUN yarn build
 

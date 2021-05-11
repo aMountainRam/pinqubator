@@ -25,7 +25,6 @@ services:
         build:
             context: ./instants-db
             args:
-                environment: dev
                 database: instants-db
                 username: root
                 password: qweasd
@@ -55,6 +54,8 @@ services:
             - ring
         build:
             context: ./frontend
+            args:
+                https_port: 443
         depends_on:
             - backend
 
