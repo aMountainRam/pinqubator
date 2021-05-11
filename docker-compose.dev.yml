@@ -9,6 +9,9 @@ services:
             - 80:80
             - 443:443
         build: ./reverse-proxy
+        volumes:
+            - ./reverse-proxy/html:/usr/share/nginx/html
+            - ./reverse-proxy/conf/includes:/etc/nginx/includes
         depends_on:
             - backend
             - frontend
@@ -16,6 +19,9 @@ services:
         hostname: broker.pinqubator.com
         networks:
             - backend-network
+        ports:
+            - 5671:5671
+            - 15672:15672
         build:
             context: ./broker
     instants-db:
@@ -26,7 +32,7 @@ services:
             context: ./instants-db
             args:
                 environment: dev
-                database: instants-db
+                database: test
                 username: root
                 password: qweasd
         volumes:
@@ -35,22 +41,23 @@ services:
             - backend-network
     backend:
         hostname: backend.pinqubator.com
+        ports:
+            - 8443:8443
         networks:
             - ring
             - backend-network
         build:
             context: ./backend
             args:
-                brokerhost: broker.pinqubator.com
-                brokerport: 5671
-                dbhost: instants-db.pinqubator.com
-                dbport: 27017
-                node_env: pro
+                node_env: dev
         depends_on:
             - instants-db
             - broker
     frontend:
         hostname: frontend.pinqubator.com
+        ports:
+            - 9080:80
+            - 9443:443
         networks:
             - ring
         build:

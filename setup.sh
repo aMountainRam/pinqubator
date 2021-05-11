@@ -106,6 +106,7 @@ set_root_ca() {
 make_certs() {
 	SSL_NGINX_CONTEXT="$WORKDIR/reverse-proxy/conf/ssl"
 	SSL_BACKEND_CONTEXT="$WORKDIR/backend/ssl"
+	SSL_FRONTEND_CONTEXT="$WORKDIR/frontend/conf/ssl"
 	SSL_BROKER_CONTEXT="$WORKDIR/broker/ssl"
 	SSL_DB_CONTEXT="$WORKDIR/instants-db/ssl"
 	NAME=pinqubator.com
@@ -115,6 +116,9 @@ make_certs() {
 	### backend
 	[ -d $SSL_BACKEND_CONTEXT ] && { rm -rf $SSL_BACKEND_CONTEXT/*; }
 	create_certs backend.$NAME $SSL_BACKEND_CONTEXT
+	### frontend
+	[ -d $SSL_FRONTEND_CONTEXT ] && { rm -rf $SSL_FRONTEND_CONTEXT/*; }
+	create_certs frontend.$NAME $SSL_FRONTEND_CONTEXT
 	### broker
 	[ -d $SSL_BROKER_CONTEXT ] && { rm -rf $SSL_BROKER_CONTEXT/*; }
 	create_certs broker.$NAME $SSL_BROKER_CONTEXT
@@ -125,7 +129,7 @@ make_certs() {
 	cat $SSL_DB_CONTEXT/instants-db.$NAME.crt $SSL_DB_CONTEXT/instants-db.$NAME.key >$SSL_DB_CONTEXT/certificate.pem
 	rm $SSL_DB_CONTEXT/instants-db.$NAME.crt $SSL_DB_CONTEXT/instants-db.$NAME.key
 
-	set_root_ca $WORKDIR $SSL_NGINX_CONTEXT $SSL_BACKEND_CONTEXT $SSL_BROKER_CONTEXT $SSL_DB_CONTEXT
+	set_root_ca $WORKDIR $SSL_NGINX_CONTEXT $SSL_BACKEND_CONTEXT $SSL_BROKER_CONTEXT $SSL_DB_CONTEXT $SSL_FRONTEND_CONTEXT
 }
 
 #########

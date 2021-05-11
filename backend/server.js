@@ -2,10 +2,6 @@
 // set environment
 export const nodeEnv = process.env.NODE_ENV;
 export const serverPort = process.env.NODE_PORT || 8443;
-if (process.env.DBNAME !== "pro") {
-    process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
-    process.env.DBNAME += "-dev";
-}
 
 // set log context
 import log from "./conf/log.conf.js";
@@ -55,7 +51,7 @@ export const brokerContext = {
     queue: "resize",
 };
 import { brokerFactory, consumerFactory } from "./service/broker.service.js";
-import { resize } from "./service/resize.service.js"
+import { resize } from "./service/resize.service.js";
 export const broker = brokerFactory(
     brokerContext,
     {
@@ -66,11 +62,16 @@ export const broker = brokerFactory(
     },
     log
 );
-export const consumer = consumerFactory(broker,(msg) => resize(db,log,msg),log);
+export const consumer = consumerFactory(
+    broker,
+    (msg) => resize(db, log, msg),
+    log
+);
 
 // setup http server with applications
 import express from "express";
 import multer from "multer";
+import cors from "cors";
 // server holds context '/'
 export const server = express();
 // while api
@@ -79,6 +80,19 @@ export const app = express();
 server.use("/api", app);
 server.use("/", express.static("public"));
 
+let corsOptions = {};
+if (process.env.NODE_ENV === "pro") {
+    corsOptions = {
+        origin: [/https:\/\/(.*)pinqubator.com/],
+        optionsSuccessStatus: 200,
+    };
+} else {
+    corsOptions = {
+        origin: "*",
+        optionsSuccessStatus: 200,
+    };
+}
+app.use(cors(corsOptions));
 app.use(express.json()); // for parsing application/json
 app.use(express.urlencoded({ extended: true })); // for parsing application/x-www-form-urlencoded
 app.use(multer().any()); // for parsing multipart/form-data
@@ -101,4 +115,4 @@ export const httpsServer = https
     )
     .listen(serverPort, () => {
         log.info(`Running on port ${serverPort}`);
-    });
+    }).addListener("error",(err) => log.error(err));

@@ -78,7 +78,10 @@ const findByUsername = (req, res) => {
                     log.error(err);
                     res.status(400).send();
                 })
-        );
+        ).catch(() => {
+            res.status(400).send(`Cannot find ${username}`)
+            log.error(`From: ${req.url} - Cannot find ${username}`)
+        });
     }
 };
 

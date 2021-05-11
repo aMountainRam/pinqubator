@@ -9,11 +9,15 @@ ARG dbport
 ENV DBHOST=${dbhost}
 ENV DBPORT=${dbport}
 
-# broker vars
+# database vars
 ARG brokerhost
 ARG brokerport
 ENV BROKERHOST=${brokerhost}
 ENV BROKERPORT=${brokerport}
+
+ARG node_env
+ENV DOTENV_CONFIG_PATH=./.env.${node_env}
+
 
 COPY . .
 COPY ./build .
