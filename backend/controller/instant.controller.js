@@ -9,7 +9,6 @@ import {
     malformedError,
 } from "../utils/messages.utils.js";
 import { StatusCodes } from "http-status-codes";
-import { userController } from "./user.controller.js";
 const Instant = db.instant;
 const User = db.user;
 
@@ -80,19 +79,23 @@ const findByUsername = async (req, res) => {
     if (req.params && req.params.username) {
         let username = req.params.username;
         return await User.findOne({ username: username })
-            .sort({ timestamp: "desc" })
-            .then((u) =>
-                u && u._id
-                    ? Instant.find({ username: u._id })
-                          .then((data) => {
-                              res.status(StatusCodes.OK).send(data);
-                              return data;
-                          })
-                          .catch((err) => {
-                              throw new Error(err);
-                          })
-                    : Promise.resolve([])
-            )
+            .then((u) => {
+                if (u && u._id) {
+                    return Instant.find({ username: u._id })
+                        .sort({ createdAt: "desc" })
+                        .then((data) => {
+                            res.status(StatusCodes.OK).send(data);
+                            return data;
+                        })
+                        .catch((err) => {
+                            throw new Error(err);
+                        });
+                } else {
+                    let data = [];
+                    res.status(StatusCodes.OK).send(data);
+                    return Promise.resolve(data);
+                }
+            })
             .catch((err) => internalServerError(err, res, log));
     } else {
         res.status(StatusCodes.BAD_REQUEST).send(
@@ -111,7 +114,7 @@ const findByUsername = async (req, res) => {
  */
 const findAll = async (_, res) => {
     return await Instant.find({})
-        .sort({ timestamp: "desc" })
+        .sort({ createdAt: "desc" })
         .then((data) => {
             res.status(StatusCodes.OK).send(data);
             return data;

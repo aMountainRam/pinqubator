@@ -83,12 +83,12 @@ server.use("/", express.static("public"));
 let corsOptions = {};
 if (process.env.NODE_ENV === "pro") {
     corsOptions = {
-        origin: [/https:\/\/(.*)pinqubator.com/],
+        origin: [/^(https?:\/\/(?:.+\.)?pinqubator\.com(?::\d{1,5})?)$/],
         optionsSuccessStatus: 200,
     };
 } else {
     corsOptions = {
-        origin: [/https:\/\/localhost(.*)/],
+        origin: [/^(https?:\/\/(?:.+\.)?localhost(?::\d{1,5})?)$/],
         optionsSuccessStatus: 200,
     };
 }
