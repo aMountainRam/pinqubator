@@ -2,5 +2,4 @@
     "mochaExplorer.files": "test/**/*.tests.js",
     "mochaExplorer.exit": true,
     "mochaExplorer.timeout": 60000,
-
 }

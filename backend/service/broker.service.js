@@ -1,8 +1,24 @@
 import amqp from "amqplib";
 
-export function brokerFactory(context, sslContext, log) {
+/**
+ * Connection factory to message broker.
+ * It provides a method `openConnection` to open a connection which
+ * abstracts away every tls/ssl complexities and takes
+ * care of the connection string.
+ *
+ * More over pub/sub routines can be found at `sendToQueue` and
+ * `consumeFromQueue`
+ * @param {*} context
+ * @param {*} sslContext
+ * @returns
+ */
+export function brokerFactory(context, sslContext) {
     return {
         connectionString: `amqps://${context.host}:${context.port}`,
+        /**
+         * Opens a tls/ssl connection towards the message broker
+         * @returns
+         */
         openConnection: () =>
             amqp.connect(
                 `amqps://guest:guest@${context.host}:${context.port}`,
@@ -13,8 +29,16 @@ export function brokerFactory(context, sslContext, log) {
                     passphrase: sslContext.passphrase,
                 }
             ),
-        sendToQueue: (open, msg, queue = context.queue) => {
-            return open.then(function (conn) {
+        /**
+         * Publishes a message `msg` on connection `open`
+         * on queue `queue`
+         * @param {*} open
+         * @param {*} msg
+         * @param {*} queue
+         * @returns {Promise<void>}
+         */
+        sendToQueue: async (open, msg, queue = context.queue) => {
+            return await open.then(function (conn) {
                 return conn.createChannel().then(function (ch) {
                     var ok = ch.assertQueue(queue, { durable: false });
 
@@ -24,19 +48,17 @@ export function brokerFactory(context, sslContext, log) {
                     });
                 });
             });
-            // .then(
-            //     (connection) => connection.createChannel(),
-            //     (err) => log.error(err)
-            // )
-            // .then((channel) =>
-            //     channel.assertQueue(queue, { durable: true }, (err, ok) =>
-            //         channel.sendToQueue(queue, Buffer.from(msg))
-            //     )
-            // )
-            // .catch((err) => log.error(err));
         },
-        consumeFromQueue: (open, callback, queue = context.queue) => {
-            return open.then(function (conn) {
+        /**
+         * Enables a consumer to read from `queue` on connection `open`
+         * while applying a `callback` for each message it receives
+         * @param {*} open
+         * @param {*} callback
+         * @param {*} queue
+         * @returns {Promise<void>}
+         */
+        consumeFromQueue: async (open, callback, queue = context.queue) => {
+            return await open.then(function (conn) {
                 return conn.createChannel().then(function (ch) {
                     ch.assertQueue(queue, { durable: false }).then(function (
                         _qok
@@ -45,15 +67,6 @@ export function brokerFactory(context, sslContext, log) {
                     });
                 });
             });
-            // .then(
-            //     (connection) => connection.createChannel(),
-            //     (err) => log.error(err)
-            // )
-            // .then((channel) =>
-            //     channel.consume(queue, callback, {
-            //         noAck: true,
-            //     })
-            // );
         },
     };
 }

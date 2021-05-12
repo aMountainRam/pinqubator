@@ -3,19 +3,94 @@ import log from "../conf/log.conf.js";
 import sizeOf from "image-size";
 import { v4 as uuidv4 } from "uuid";
 import { broker } from "../server.js";
-import {
-    handleInternal,
-    internalServerError,
-    malformedError,
-} from "../utils/messages.utils.js";
+import { handleInternal, malformedError } from "../utils/messages.utils.js";
 import { StatusCodes } from "http-status-codes";
 const Instant = db.instant;
 const User = db.user;
 
-const create = async (req, res) => {
-    if (!req || !req.files || req.files.length !== 1 || !req.body) {
-        res.status(400).send("Malformed request");
+/**
+ * Sets coordinates inside `obj`
+ * @param {*} obj
+ * @param {*} coordinates
+ */
+const setLocation = (obj, { lat, long }) => {
+    let location = {
+        type: "Point",
+        coordinates: [Number.parseFloat(lat), Number.parseFloat(long)],
+    };
+    delete obj.lat;
+    delete obj.long;
+    obj.location = location;
+};
+
+/**
+ * Retuns a promise after sending request
+ * to the broker to queue a resize job
+ * @param {*} id
+ * @param {*} buffer
+ * @returns {Promise<any>}
+ */
+const sendToQueue = async (id, buffer) => {
+    return await broker.sendToQueue(
+        broker.openConnection(),
+        JSON.stringify({
+            jobId: id,
+            buffer,
+        })
+    );
+};
+
+/**
+ * Sets image properties onto `obj` where
+ * the image is given into `files` with a given
+ * buffer. On return such buffer is sent via `sent`
+ * to a broker for a resize job.
+ *
+ * Resize job is triggered only when either image dimension
+ * is larger than 140 pixels.
+ *
+ * @param {*} obj
+ * @param {*} file
+ * @param {*} send
+ * @returns {Promise<any>}
+ */
+const setSize = async (obj, file, send) => {
+    const size = sizeOf(file.buffer);
+    const uuid = uuidv4();
+    obj.image = file;
+    obj.image.jobId = uuid;
+
+    if (size.width <= 140 && size.height <= 140) {
+        obj.size = size;
+        return await Promise.resolve();
     } else {
+        let buffer = obj.image.buffer;
+        delete obj.image.buffer;
+        return await send(uuid, buffer);
+    }
+};
+
+/**
+ * Create an instant. The request must contain:
+ *  1. a username `username`
+ *  2. a file with an image `image`
+ *  3. a title `title`
+ *  4. a latitude `lat`
+ *  5. a longitude `long`
+ *
+ * In case of successful request, the image buffer is
+ * sent to an asynchronous job to be rescaled
+ * in order to fit 140x140 pixels if needed.
+ *
+ * Meanwhile instant is saved and later the scheduled
+ * job will update its content
+ *
+ * @param {*} req
+ * @param {*} res
+ * @returns {Promise<any>}
+ */
+const create = async (req, res) => {
+    if (req.body && req.files && req.files.length === 1) {
         let instaObj = req.body;
         try {
             await User.create({ username: instaObj.username })
@@ -28,44 +103,35 @@ const create = async (req, res) => {
                     )
                 );
 
-            let location = {
-                type: "Point",
-                coordinates: [
-                    Number.parseFloat(req.body.lat),
-                    Number.parseFloat(req.body.long),
-                ],
-            };
-            delete instaObj.lat;
-            delete instaObj.long;
-            instaObj.location = location;
-            const size = sizeOf(req.files[0].buffer);
-            if (size.width <= 140 && size.height <= 140) {
-                instaObj.size = size;
-                instaObj.image = req.files[0];
-            } else {
-                instaObj.image = req.files[0];
-                instaObj.image.jobId = uuidv4();
-                let buffer = instaObj.image.buffer;
-                delete instaObj.image.buffer;
-                broker.sendToQueue(
-                    broker.openConnection(),
-                    JSON.stringify({
-                        jobId: instaObj.image.jobId,
-                        buffer,
-                    })
-                );
-                // here to schedule a job !!
-            }
-            const instant = new Instant(instaObj);
-            instant
-                .save(instant)
-                .then(() => res.status(200).send())
-                .catch(() => {
-                    res.status(400).send("Malformed request");
+            // compute image size
+            return await setSize(instaObj, req.files[0], sendToQueue)
+                .then(() => {
+                    // handle geolocation
+                    setLocation(instaObj, req.body);
+                    let instant = new Instant(instaObj);
+                    return instant
+                        .save(instant)
+                        .then((i) => {
+                            res.status(StatusCodes.OK).send();
+                            return i;
+                        })
+                        .catch((err) => {
+                            handleInternal(err,res,log);
+                            throw new Error(err);
+                        });
+                })
+                .catch((err) => {
+                    throw new Error(err);
                 });
-        } catch (_) {
-            res.status(400).send("Malformed request");
+        } catch (err) {
+            handleInternal(err, res, log);
+            return await Promise.reject();
         }
+    } else {
+        res.status(StatusCodes.BAD_REQUEST).send(
+            malformedError("username is required")
+        );
+        return await Promise.reject();
     }
 };
 
@@ -80,7 +146,7 @@ const findByUsername = async (req, res) => {
         let username = req.params.username;
         return await User.findOne({ username: username })
             .then((u) => {
-                if (u && u._id) {
+                if (u && (u.hasOwnProperty("_id") || u._id)) {
                     return Instant.find({ username: u._id })
                         .sort({ createdAt: "desc" })
                         .then((data) => {
@@ -96,7 +162,7 @@ const findByUsername = async (req, res) => {
                     return Promise.resolve(data);
                 }
             })
-            .catch((err) => internalServerError(err, res, log));
+            .catch((err) => handleInternal(err, res, log));
     } else {
         res.status(StatusCodes.BAD_REQUEST).send(
             malformedError("username is required")

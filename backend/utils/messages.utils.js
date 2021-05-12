@@ -2,7 +2,7 @@ import { StatusCodes } from "http-status-codes";
 export const malformedError = (msg) => {
     return { message: `Malformed request caused by: ${msg}.` };
 };
-export const internalServerError = () => {
+const internalServerError = () => {
     return { message: "Oops! An error occured." };
 };
 const mongoErrors = {

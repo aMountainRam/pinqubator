@@ -59,8 +59,7 @@ export const broker = brokerFactory(
         key: sslContext.key,
         passphrase: sslContext.passphrase,
         ca: [sslContext.ca],
-    },
-    log
+    }
 );
 export const consumer = consumerFactory(
     broker,
@@ -81,7 +80,7 @@ server.use("/api", app);
 server.use("/", express.static("public"));
 
 let corsOptions = {};
-if (process.env.NODE_ENV === "pro") {
+if (process.env.NODE_ENV === "prod") {
     corsOptions = {
         origin: [/^(https?:\/\/(?:.+\.)?pinqubator\.com(?::\d{1,5})?)$/],
         optionsSuccessStatus: 200,
