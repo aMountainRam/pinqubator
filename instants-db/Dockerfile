@@ -12,4 +12,4 @@ ENV MONGO_INITDB_DATABASE=${database}
 ENV MONGO_INITDB_ROOT_USERNAME=${username}
 ENV MONGO_INITDB_ROOT_PASSWORD=${password}
 EXPOSE 27017
-ENTRYPOINT ["/usr/bin/mongod", "--config", "/etc/mongod.conf"]
+CMD ["--config", "/etc/mongod.conf"]

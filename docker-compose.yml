@@ -46,7 +46,7 @@ services:
                 brokerport: 5671
                 dbhost: instants-db.pinqubator.com
                 dbport: 27017
-                node_env: pro
+                node_env: prod
         depends_on:
             - instants-db
             - broker

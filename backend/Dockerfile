@@ -20,7 +20,7 @@ ENV DOTENV_CONFIG_PATH=./.env.${node_env}
 
 
 COPY . .
-COPY ./build .
+COPY ./sh .
 RUN chmod +x ./*.sh
 EXPOSE 8443
 ENTRYPOINT ["./run.sh"]
