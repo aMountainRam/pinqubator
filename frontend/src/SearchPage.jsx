@@ -32,7 +32,7 @@ export default function SearchPage() {
         justifyContent: "flex-start",
     };
     const handleRefresh = () => {
-        getInstants(val)
+        val && val !== "" && getInstants(val)
             .then((d) => {
                 console.log(d.data);
                 setData(d.data);
@@ -40,8 +40,9 @@ export default function SearchPage() {
             .catch(() => setData([]));
     }
     const handleChange = (event) => {
-        setVal(event.target.value);
-        getInstants(event.target.value)
+        let v = event.target.value;
+        setVal(v);
+        v && v !== "" && getInstants(v)
             .then((d) => {
                 console.log(d.data);
                 setData(d.data);
