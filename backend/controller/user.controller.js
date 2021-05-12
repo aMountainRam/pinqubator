@@ -43,7 +43,7 @@ const create = async (req, res) => {
 const findAll = async (_, res) => {
     return await User.find({})
         .then((data) => {
-            res.status(200).send(data);
+            res.status(StatusCodes.OK).send(data);
             return data;
         })
         .catch((err) => handleInternal(err, res, log));

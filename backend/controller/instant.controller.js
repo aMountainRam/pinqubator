@@ -3,6 +3,13 @@ import log from "../conf/log.conf.js";
 import sizeOf from "image-size";
 import { v4 as uuidv4 } from "uuid";
 import { broker } from "../server.js";
+import {
+    handleInternal,
+    internalServerError,
+    malformedError,
+} from "../utils/messages.utils.js";
+import { StatusCodes } from "http-status-codes";
+import { userController } from "./user.controller.js";
 const Instant = db.instant;
 const User = db.user;
 
@@ -63,39 +70,53 @@ const create = async (req, res) => {
     }
 };
 
-const findByUsername = (req, res) => {
-    if (!req.params || !req.params.username) {
-        res.status(400).send("Malformed request");
-    } else {
+/**
+ * Returns all instants uploaded by a given user
+ * @param {*} req
+ * @param {*} res
+ * @returns {Promise<any>}
+ */
+const findByUsername = async (req, res) => {
+    if (req.params && req.params.username) {
         let username = req.params.username;
-        User.findOne({ username: username })
+        return await User.findOne({ username: username })
             .sort({ timestamp: "desc" })
             .then((u) =>
-                Instant.find({ username: u._id })
-                    .then((data) => {
-                        res.status(200).send(data);
-                    })
-                    .catch((err) => {
-                        log.error(err);
-                        res.status(400).send();
-                    })
+                u && u._id
+                    ? Instant.find({ username: u._id })
+                          .then((data) => {
+                              res.status(StatusCodes.OK).send(data);
+                              return data;
+                          })
+                          .catch((err) => {
+                              throw new Error(err);
+                          })
+                    : Promise.resolve([])
             )
-            .catch(() => {
-                res.status(400).send(`Cannot find ${username}`);
-                log.error(`From: ${req.url} - Cannot find ${username}`);
-            });
+            .catch((err) => internalServerError(err, res, log));
+    } else {
+        res.status(StatusCodes.BAD_REQUEST).send(
+            malformedError("username is required")
+        );
+        return await Promise.reject();
     }
 };
 
-const findAll = (_, res) => {
-    Instant.find({})
+/**
+ * Returns all instants currently available on the
+ * database
+ * @param {*} _
+ * @param {*} res
+ * @returns {Promise<any>}
+ */
+const findAll = async (_, res) => {
+    return await Instant.find({})
+        .sort({ timestamp: "desc" })
         .then((data) => {
-            res.status(200).send(data);
+            res.status(StatusCodes.OK).send(data);
+            return data;
         })
-        .catch((err) => {
-            log.error(err);
-            res.status(400).send();
-        });
+        .catch((err) => handleInternal(err, res, log));
 };
 
 export const instantController = { create, findAll, findByUsername };
