@@ -4,6 +4,7 @@ import sizeOf from "image-size";
 import { v4 as uuidv4 } from "uuid";
 import { broker } from "../server.js";
 const Instant = db.instant;
+const User = db.user;
 
 const create = async (req, res) => {
     if (!req || !req.files || req.files.length !== 1 || !req.body) {
@@ -11,15 +12,14 @@ const create = async (req, res) => {
     } else {
         let instaObj = req.body;
         try {
-            await db.user
-                .create({ username: instaObj.username })
+            await User.create({ username: instaObj.username })
                 .then((data) => {
                     instaObj.username = data._id;
                 })
                 .catch((_) =>
-                    db.user
-                        .findOne({ username: instaObj.username })
-                        .then((data) => (instaObj.username = data._id))
+                    User.findOne({ username: instaObj.username }).then(
+                        (data) => (instaObj.username = data._id)
+                    )
                 );
 
             let location = {
@@ -68,26 +68,34 @@ const findByUsername = (req, res) => {
         res.status(400).send("Malformed request");
     } else {
         let username = req.params.username;
-        db.user.findOne({ username: username }).then((u) =>
-            db.instant
-                .find({ username: u._id })
-                .then((data) => {
-                    res.status(200).send(data);
-                })
-                .catch((err) => {
-                    log.error(err);
-                    res.status(400).send();
-                })
-        ).catch(() => {
-            res.status(400).send(`Cannot find ${username}`)
-            log.error(`From: ${req.url} - Cannot find ${username}`)
-        });
+        User.findOne({ username: username })
+            .sort({ timestamp: "desc" })
+            .then((u) =>
+                Instant.find({ username: u._id })
+                    .then((data) => {
+                        res.status(200).send(data);
+                    })
+                    .catch((err) => {
+                        log.error(err);
+                        res.status(400).send();
+                    })
+            )
+            .catch(() => {
+                res.status(400).send(`Cannot find ${username}`);
+                log.error(`From: ${req.url} - Cannot find ${username}`);
+            });
     }
 };
 
-const findAll = (req, res) => {
-    log.info(`GET ${req.body}`);
-    res.status(200).send();
+const findAll = (_, res) => {
+    Instant.find({})
+        .then((data) => {
+            res.status(200).send(data);
+        })
+        .catch((err) => {
+            log.error(err);
+            res.status(400).send();
+        });
 };
 
 export const instantController = { create, findAll, findByUsername };
