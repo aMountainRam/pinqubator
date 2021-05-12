@@ -88,7 +88,7 @@ if (process.env.NODE_ENV === "pro") {
     };
 } else {
     corsOptions = {
-        origin: "*",
+        origin: [/https:\/\/localhost(.*)/],
         optionsSuccessStatus: 200,
     };
 }
@@ -99,7 +99,9 @@ app.use(multer().any()); // for parsing multipart/form-data
 // inject controller
 import controller from "./controller/app.controller.js";
 controller(app);
-
+app.get("/", (req, res) => {
+    res.send("hey");
+});
 // server is ready for listening
 // on 'serverPort' https only
 // either way proxy pass redirects on 8443
@@ -115,4 +117,4 @@ export const httpsServer = https
     )
     .listen(serverPort, () => {
         log.info(`Running on port ${serverPort}`);
-    }).addListener("error",(err) => log.error(err));
+    }).addListener("error", (err) => log.error(err));
