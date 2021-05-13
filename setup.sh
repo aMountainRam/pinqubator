@@ -109,6 +109,9 @@ make_certs() {
 	SSL_FRONTEND_CONTEXT="$WORKDIR/frontend/conf/ssl"
 	SSL_BROKER_CONTEXT="$WORKDIR/broker/ssl"
 	SSL_DB_CONTEXT="$WORKDIR/instants-db/ssl"
+	mkdir -p $SSL_NGINX_CONTEXT \
+		$SSL_BACKEND_CONTEXT $SSL_FRONTEND_CONTEXT \
+		$SSL_BROKER_CONTEXT $SSL_DB_CONTEXT;
 	NAME=pinqubator.com
 	### nginx
 	[ -d $SSL_NGINX_CONTEXT ] && { rm -rf $SSL_NGINX_CONTEXT/*; }
