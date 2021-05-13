@@ -10,9 +10,7 @@
     "type": "module",
     "scripts": {
         "dev": "DOTENV_CONFIG_PATH=./.env.dev nodemon -r dotenv/config server.js",
-        "test": "DOTENV_CONFIG_PATH=./.env.test nodemon -r dotenv/config --exec 'mocha -R min test/**/*.js'",
-        "old-test": "mocha --timeout 60000 --exit \"test/**/*.tests.js\"",
-        "int-test": "bash ./sh/run-int-tests.sh"
+        "test": "DOTENV_CONFIG_PATH=./.env.test mocha --require dotenv/config --exit --timeout 60000 -R spec --recursive \"./test/**/*.js\""
     },
     "author": "Umberto Toniolo <amountainram@gmail.com>",
     "license": "ISC",

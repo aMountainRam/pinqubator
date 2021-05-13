@@ -28,8 +28,8 @@ export class BrokerConnection extends EventEmitter {
      * @param {*} queue
      * @returns {Promise<void>}
      */
-    sendToQueue = async (msg, queue = this.context.queue) => {
-        return await this.connection.createChannel().then(function (ch) {
+    sendToQueue = (msg, queue = this.context.queue) =>
+        this.connection.createChannel().then(function (ch) {
             var ok = ch.assertQueue(queue, { durable: false });
 
             return ok.then(function (_qok) {
@@ -37,7 +37,6 @@ export class BrokerConnection extends EventEmitter {
                 return ch.close();
             });
         });
-    };
     /**
      * Enables a consumer to read from `queue` on connection `open`
      * while applying a `callback` for each message it receives
@@ -46,14 +45,13 @@ export class BrokerConnection extends EventEmitter {
      * @param {*} queue
      * @returns {Promise<void>}
      */
-    consumeFromQueue = async (callback, queue = this.context.queue, emitter = this) => {
-        return await this.connection.createChannel().then(function (ch) {
+    consumeFromQueue = (callback, queue = this.context.queue, emitter = this) =>
+        this.connection.createChannel().then(function (ch) {
             ch.assertQueue(queue, { durable: false }).then(function (_qok) {
-                emitter.emit("consuming",queue);
+                emitter.emit("consuming", queue);
                 return ch.consume(queue, callback, { noAck: true });
             });
         });
-    };
     registerConsumer(callback) {
         if (this.connection) {
             this.consumeFromQueue(callback);

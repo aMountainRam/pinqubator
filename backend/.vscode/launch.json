@@ -16,9 +16,12 @@
         {
             "type": "pwa-node",
             "request": "launch",
+            "envFile": "${workspaceFolder}/.env.test",
             "name": "Mocha Tests",
             "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
             "args": [
+                "-r",
+                "dotenv/config",
                 "--timeout",
                 "60000",
                 "--exit",
