@@ -1,11 +1,11 @@
 import { expect } from "chai";
 import httpMocks from "node-mocks-http";
-import sinon from "sinon";
-import log from "../../../conf/log.conf.js";
 import { handleInternal } from "../../../utils/messages.utils.js";
+import { spyLogError } from "../../test.config.js";
+import log4js from "log4js";
+const log = log4js.getLogger("default");
 
 describe("check branches into handleInternal", () => {
-    let spyLogError = sinon.spy(log, "error");
     beforeEach("setup", () => {
         spyLogError.resetHistory();
     });

@@ -22,10 +22,10 @@
                 "--timeout",
                 "60000",
                 "--exit",
-                "${workspaceFolder}/test/**/*.js"
+                "${workspaceFolder}/test/**/*.js",
             ],
             "internalConsoleOptions": "openOnSessionStart",
             "skipFiles": ["<node_internals>/**"]
-        }
+        },
     ]
 }

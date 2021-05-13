@@ -4,13 +4,14 @@ import sinon from "sinon";
 import httpMocks from "node-mocks-http";
 import moment from "moment";
 import { instantController } from "../../../controller/instant.controller.js";
-import db from "../../../model/db.model.js";
+import { Instant } from "../../../model/instant.model.js";
+import { User } from "../../../model/user.model.js";
 chai.use(chaiAsPromised);
 
 describe("unit tests on instant controller", () => {
     let res;
-    let find = sinon.stub(db.instant, "find");
-    let userFindOne = sinon.stub(db.user, "findOne");
+    let find = sinon.stub(Instant, "find");
+    let userFindOne = sinon.stub(User, "findOne");
     describe("200 OK tests", () => {
         let arr = [
             {
