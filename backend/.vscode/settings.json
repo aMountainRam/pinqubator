@@ -1,6 +1,4 @@
 {
-    "mochaExplorer.files": "test/**/*.js",
-    "mochaExplorer.exit": true,
-    "mochaExplorer.timeout": 60000,
-    "mochaExplorer.envPath": ".env.test"
+    "mochaExplorer.envPath": ".env.test",
+    "mochaExplorer.configFile": "test/.mocharc.json"
 }

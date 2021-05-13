@@ -1,16 +1,17 @@
-import { v4 as uuid } from "uuid";
-import mongoose from "mongoose";
 import { Instant } from "../../../model/instant.model.js";
 import { User } from "../../../model/user.model.js";
 import { expect } from "chai";
+import { instantWithoutUser, threeInsants, twoUsers } from "../utils.tests.js";
 
-describe("create and instant", () => {
+describe("CRUD operations on 'instants'", () => {
     let extCount = 0;
     // remove tables
     beforeEach((done) => {
-        mongoose.connection.db.dropDatabase().then(() => {
+        Instant.deleteMany({}).then(() => {
             extCount = 0;
-            done();
+            User.deleteMany({}).then(() => {
+                done();
+            });
         });
     });
     afterEach((done) => {
@@ -20,21 +21,7 @@ describe("create and instant", () => {
         });
     });
     it("should create and instant", (done) => {
-        const instant = new Instant({
-            username: mongoose.Types.ObjectId(),
-            title: "title",
-            image: {
-                jobId: uuid(),
-            },
-            size: {
-                width: 0,
-                height: 0,
-            },
-            location: {
-                type: "Point",
-                coordinates: [0, 0],
-            },
-        });
+        const instant = instantWithoutUser;
         instant.save().then(() => {
             expect(instant.isNew).to.be.false;
             extCount = 1;
@@ -42,63 +29,33 @@ describe("create and instant", () => {
         });
     });
     it("should create 3 instants and 2 different users", (done) => {
-        const u1 = new User({ username: "u1" });
-        const u2 = new User({ username: "u2" });
-        User.insertMany([u1, u2])
+        User.insertMany(twoUsers)
             .then((res) => {
                 expect(res.length).is.equal(2);
                 return res;
             })
             .then((res) => {
-                const i1 = new Instant({
-                    username: res[0]._id,
-                    title: "title",
-                    image: {
-                        jobId: uuid(),
-                    },
-                    size: {
-                        width: 0,
-                        height: 0,
-                    },
-                    location: {
-                        type: "Point",
-                        coordinates: [0, 0],
-                    },
-                });
-                const i2 = new Instant({
-                    username: res[1]._id,
-                    title: "title",
-                    image: {
-                        jobId: uuid(),
-                    },
-                    size: {
-                        width: 0,
-                        height: 0,
-                    },
-                    location: {
-                        type: "Point",
-                        coordinates: [0, 0],
-                    },
-                });
-                const i3 = new Instant({
-                    username: res[1]._id,
-                    title: "title",
-                    image: {
-                        jobId: uuid(),
-                    },
-                    size: {
-                        width: 0,
-                        height: 0,
-                    },
-                    location: {
-                        type: "Point",
-                        coordinates: [0, 0],
-                    },
-                });
-
-                Instant.insertMany([i1, i2, i3]).then(() => {
+                Instant.insertMany(threeInsants(res)).then(() => {
                     extCount = 3;
                     done();
+                });
+            });
+    });
+    it("removes all instants created", (done) => {
+        User.insertMany(twoUsers)
+            .then((res) => {
+                expect(res.length).is.equal(2);
+                return res;
+            })
+            .then((res) => {
+                Instant.insertMany(threeInsants(res)).then(() => {
+                    extCount = 3;
+                    Instant.deleteOne({ username: twoUsers[0]._id }).then(
+                        () => {
+                            extCount = 2;
+                            done();
+                        }
+                    );
                 });
             });
     });
