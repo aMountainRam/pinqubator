@@ -6,6 +6,7 @@ export DBHOST=localhost;
 export DBPORT=27017;
 export BROKERHOST=localhost;
 export BROKERPORT=5671;
+export NODE_TLS_REJECT_UNAUTHORIZED="0";
 WORKDIR=`dirname $0`;
 bash $WORKDIR/wait-for-it.sh $DBHOST:$DBPORT -t 10 -s -- \
     bash $WORKDIR/wait-for-it.sh $BROKERHOST:$BROKERPORT -t 10 -s -- \
