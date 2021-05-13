@@ -11,7 +11,7 @@ export function getInstants(username) {
 }
 
 export function uploadInstant(form) {
-    return axios.post(`${URL}/instants/`, form, {
+    return axios.post(`${URL}/instants`, form, {
         headers: {
             "Content-Type": "multipart/form-data",
         },

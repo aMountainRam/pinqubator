@@ -66,7 +66,6 @@ export default function TemporaryDrawer() {
     }
 
     const handleUpload = () => {
-        debugger;
         const form = new FormData();
         if (!input.picture) {
             alert("must upload a picture");
