@@ -24,3 +24,10 @@ export const handleInternal = (err, res, log) => {
     }
     log.error(err);
 };
+
+export const deserialize = (msg) => {
+    return JSON.parse(msg.content.toString());
+};
+export const serialize = (obj) => {
+    return JSON.stringify(obj);
+};
