@@ -20,3 +20,14 @@ from the main folder (80 and 443 must be free)
 ```console
 $ docker-compose up -d
 ```
+
+## startup
+```console
+export HTTP_PORT=80
+export HTTPS_PORT=433
+./setup.sh certs --no-build
+docker-compose up --build -d
+```
+```console
+./setup.sh go
+```
