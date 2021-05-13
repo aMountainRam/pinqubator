@@ -49,3 +49,22 @@ export const resize = (
             log.error(err);
             return Promise.reject(err);
         });
+
+export const resizeService = (
+    msg,
+    cb,
+    opts = {
+        width: WIDTH,
+        height: HEIGHT,
+        fit: sharp.fit.inside,
+    }
+) =>
+    sharp(Buffer.from(msg.buffer.data))
+        .resize(opts)
+        .jpeg({ mozjpeg: true })
+        .toBuffer()
+        .then(cb)
+        .catch((err) => {
+            log.error(err);
+            return Promise.reject(err);
+        });
