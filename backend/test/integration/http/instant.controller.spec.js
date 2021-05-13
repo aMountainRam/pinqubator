@@ -2,11 +2,11 @@ import sinon from "sinon";
 import chai, { expect } from "chai";
 import chaiHttp from "chai-http";
 import mongoose from "mongoose";
-import { User } from "../../../model/user.model.js";
 import httpsServer from "../../../service/https.server.service.js";
 import fs from "fs";
 import { StatusCodes } from "http-status-codes";
 import { Instant } from "../../../model/instant.model.js";
+import { stubs } from "../../test.config.js";
 chai.use(chaiHttp);
 const any = sinon.match.any;
 
@@ -21,8 +21,7 @@ describe("inspect instant controller", () => {
     })
     describe("POST instant", () => {
         let currentInstants = 0;
-        sinon
-            .stub(User, "create")
+        stubs.userfind.stub
             .withArgs(any)
             .resolves({ _id: mongoose.Types.ObjectId().toHexString() });
         beforeEach("checks documents in instants", (done) => {

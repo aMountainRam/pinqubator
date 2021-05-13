@@ -2,12 +2,8 @@ import axios from "axios";
 const URL = `https://${process.env.REACT_APP_APIHOST}:${process.env.REACT_APP_APIPORT}/${process.env.REACT_APP_APIBASE}`;
 
 export function getInstants(username) {
-    console.log(URL);
-    return axios.get(`${URL}/instants/${username}`,{
-        headers: {
-            "Content-Type": "application/json",
-        }
-    });
+    const url = `${URL}/instants${username === "" ? "" : "/" + username}`;
+    return axios.get(url);
 }
 
 export function uploadInstant(form) {

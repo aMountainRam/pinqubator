@@ -18,6 +18,7 @@ const useStyles = makeStyles((theme) => ({
 export default function SearchPage() {
     const [val,setVal] = React.useState("");
     const [data, setData] = React.useState([]);
+    React.useEffect(() => handleRefresh(),[]);
 
     const classes = useStyles();
     const inputDiv = {
@@ -32,7 +33,7 @@ export default function SearchPage() {
         justifyContent: "flex-start",
     };
     const handleRefresh = () => {
-        val && val !== "" && getInstants(val)
+        getInstants(val)
             .then((d) => {
                 console.log(d.data);
                 setData(d.data);
@@ -42,7 +43,7 @@ export default function SearchPage() {
     const handleChange = (event) => {
         let v = event.target.value;
         setVal(v);
-        v && v !== "" && getInstants(v)
+        getInstants(v)
             .then((d) => {
                 console.log(d.data);
                 setData(d.data);
