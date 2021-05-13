@@ -1,10 +1,10 @@
 "use strict";
-import db from "../model/db.model.js";
-import log from "../conf/log.conf.js";
+import log4js from "log4js";
 import { handleInternal, malformedError } from "../utils/messages.utils.js";
 import { StatusCodes } from "http-status-codes";
+import { User } from "../model/user.model.js";
 
-const User = db.user;
+const log = log4js.getLogger("default");
 
 /**
  * Creates a new user if `username` field is not

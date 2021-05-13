@@ -1,10 +1,10 @@
 "use strict";
+import mongoose from "mongoose";
 
-function instant(db) {
-    return db.Schema(
+const InstantSchema = mongoose.Schema(
         {
             username: {
-                type: db.Schema.Types.ObjectId,
+                type: mongoose.Schema.Types.ObjectId,
                 ref: "User",
                 required: true,
             },
@@ -39,6 +39,5 @@ function instant(db) {
         },
         { timestamps: true }
     );
-}
 
-export default (db) => db.model("Instant", instant(db));
+export const Instant = mongoose.model("Instant", InstantSchema);

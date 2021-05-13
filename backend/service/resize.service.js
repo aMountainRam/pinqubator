@@ -1,5 +1,9 @@
 import sharp from "sharp";
 import sizeOf from "image-size";
+import log4js from "log4js";
+import {Instant} from "../model/instant.model.js"
+
+const log = log4js.getLogger("default");
 
 const WIDTH = 140;
 const HEIGHT = 140;
@@ -12,14 +16,11 @@ const HEIGHT = 140;
  * Once done it uses `db` to update an instant
  *
  * @param {*} db
- * @param {*} log
  * @param {*} msg
  * @param {*} opts
  * @returns {Promise<Buffer>}
  */
 export const resize = async (
-    db,
-    log,
     msg,
     opts = {
         width: WIDTH,
@@ -34,7 +35,7 @@ export const resize = async (
         .then((buffer) => {
             try {
                 const size = sizeOf(buffer);
-                db.instant
+                Instant
                     .findOneAndUpdate(
                         { "image.jobId": msg.jobId },
                         { "image.buffer": buffer, size: size }

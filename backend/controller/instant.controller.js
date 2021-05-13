@@ -1,13 +1,14 @@
-import db from "../model/db.model.js";
-import log from "../conf/log.conf.js";
+"use strict"
+import log4js from "log4js";
 import sizeOf from "image-size";
 import { v4 as uuidv4 } from "uuid";
-import { broker } from "../server.js";
-import { handleInternal, malformedError } from "../utils/messages.utils.js";
+import broker from "../service/broker.service.js";
+import { handleInternal, malformedError, serialize } from "../utils/messages.utils.js";
 import { StatusCodes } from "http-status-codes";
-const Instant = db.instant;
-const User = db.user;
+import { User } from "../model/user.model.js";
+import { Instant } from "../model/instant.model.js";
 
+const log = log4js.getLogger("default")
 /**
  * Sets coordinates inside `obj`
  * @param {*} obj
@@ -30,13 +31,9 @@ const setLocation = (obj, { lat, long }) => {
  * @param {*} buffer
  * @returns {Promise<any>}
  */
-const sendToQueue = async (id, buffer) => {
-    return await broker.sendToQueue(
-        broker.openConnection(),
-        JSON.stringify({
-            jobId: id,
-            buffer,
-        })
+const sendToQueue = async (jobId, buffer) => {
+    return await broker.connection.sendToQueue(
+        serialize({jobId,buffer})
     );
 };
 
@@ -145,9 +142,9 @@ const findByUsername = async (req, res) => {
     if (req.params && req.params.username) {
         let username = req.params.username;
         return await User.findOne({ username: username })
-            .then((u) => {
+            .then(async (u) => {
                 if (u && (u.hasOwnProperty("_id") || u._id)) {
-                    return Instant.find({ username: u._id })
+                    return await Instant.find({ username: u._id })
                         .sort({ createdAt: "desc" })
                         .then((data) => {
                             res.status(StatusCodes.OK).send(data);
@@ -159,7 +156,7 @@ const findByUsername = async (req, res) => {
                 } else {
                     let data = [];
                     res.status(StatusCodes.OK).send(data);
-                    return Promise.resolve(data);
+                    return await Promise.resolve(data);
                 }
             })
             .catch((err) => handleInternal(err, res, log));

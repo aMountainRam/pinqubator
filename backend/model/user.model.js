@@ -1,7 +1,7 @@
 "use strict";
+import mongoose from "mongoose";
 
-function user(db) {
-    return db.Schema(
+const UserSchema = mongoose.Schema(
         {
             username: {
                 type: String,
@@ -11,6 +11,5 @@ function user(db) {
         },
         { timestamps: true }
     );
-}
 
-export default (db) => db.model("User", user(db));
+export const User = mongoose.model("User", UserSchema);
