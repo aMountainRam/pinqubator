@@ -1,15 +1,16 @@
 {
     "name": "backend",
     "version": "1.0.0",
-    "description": "",
+    "description": "backend for mobile app to share Instants",
     "main": "server.js",
     "type": "module",
     "scripts": {
         "dev": "DOTENV_CONFIG_PATH=./.env.dev nodemon -r dotenv/config server.js",
-        "test": "mocha --timeout 60000 --exit \"test/unit/**/*.tests.js\"",
+        "test": "DOTENV_CONFIG_PATH=./.env.test nodemon -r dotenv/config --exec 'mocha -R min test/**/*.js'",
+        "old-test": "mocha --timeout 60000 --exit \"test/unit/**/*.tests.js\"",
         "int-test": "bash ./sh/run-int-tests.sh"
     },
-    "author": "",
+    "author": "Umberto Toniolo <amountainram@gmail.com>",
     "license": "ISC",
     "dependencies": {
         "amqplib": "^0.7.1",
