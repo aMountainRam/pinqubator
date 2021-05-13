@@ -159,6 +159,9 @@ for arg in "$@"; do
 	"certs")
 		MAKE_CERTS=true
 		;;
+	"--no-build")
+		MAKE_BUILD=false
+		;;
 	"keepCA")
 		REMOVE_CA=false
 		;;
