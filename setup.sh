@@ -146,12 +146,16 @@ build() {
 	docker-compose build
 }
 
+GO=false
 MAKE_BUILD=true
 MAKE_CERTS=false
 REMOVE_CA=true
 LAUNCH_STOP=false
 for arg in "$@"; do
 	case $arg in
+	"go")
+		GO=true
+		;;
 	"certs")
 		MAKE_CERTS=true
 		;;
@@ -167,6 +171,19 @@ for arg in "$@"; do
 		;;
 	esac
 done
+
+if [ "$GO" = true ]; then
+	create_ca
+	make_certs
+	if [ "$REMOVE_CA" = true ]; then
+		[ -d $CA_DIR ] && { rm -r $CA_DIR; }
+	fi
+	export HTTP_PORT=80;
+	export HTTPS_PORT=443;
+	docker-compose up --build -d
+	exit 0;
+fi
+
 if [ "$LAUNCH_STOP" = true ]; then
 	docker-compose down
 	exit 0
