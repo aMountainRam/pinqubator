@@ -1,7 +1,7 @@
 import sharp from "sharp";
 import sizeOf from "image-size";
 import log4js from "log4js";
-import {Instant} from "../model/instant.model.js"
+import { Instant } from "../model/instant.model.js";
 
 const log = log4js.getLogger("default");
 
@@ -20,27 +20,25 @@ const HEIGHT = 140;
  * @param {*} opts
  * @returns {Promise<Buffer>}
  */
-export const resize = async (
+export const resize = (
     msg,
     opts = {
         width: WIDTH,
         height: HEIGHT,
         fit: sharp.fit.inside,
     }
-) => {
-    return await sharp(Buffer.from(msg.buffer.data))
+) =>
+    sharp(Buffer.from(msg.buffer.data))
         .resize(opts)
         .jpeg({ mozjpeg: true })
         .toBuffer()
         .then((buffer) => {
             try {
                 const size = sizeOf(buffer);
-                Instant
-                    .findOneAndUpdate(
-                        { "image.jobId": msg.jobId },
-                        { "image.buffer": buffer, size: size }
-                    )
-                    .catch((err) => log.error(err));
+                Instant.findOneAndUpdate(
+                    { "image.jobId": msg.jobId },
+                    { "image.buffer": buffer, size: size }
+                ).catch((err) => log.error(err));
             } catch (err) {
                 log.error(err);
                 return Promise.reject(err);
@@ -51,4 +49,3 @@ export const resize = async (
             log.error(err);
             return Promise.reject(err);
         });
-};

@@ -1,14 +1,18 @@
-"use strict"
+"use strict";
 import log4js from "log4js";
 import sizeOf from "image-size";
 import { v4 as uuidv4 } from "uuid";
 import broker from "../service/broker.service.js";
-import { handleInternal, malformedError, serialize } from "../utils/messages.utils.js";
+import {
+    handleInternal,
+    malformedError,
+    serialize,
+} from "../utils/messages.utils.js";
 import { StatusCodes } from "http-status-codes";
 import { User } from "../model/user.model.js";
 import { Instant } from "../model/instant.model.js";
 
-const log = log4js.getLogger("default")
+const log = log4js.getLogger("default");
 /**
  * Sets coordinates inside `obj`
  * @param {*} obj
@@ -31,11 +35,8 @@ const setLocation = (obj, { lat, long }) => {
  * @param {*} buffer
  * @returns {Promise<any>}
  */
-const sendToQueue = async (jobId, buffer) => {
-    return await broker.connection.sendToQueue(
-        serialize({jobId,buffer})
-    );
-};
+const sendToQueue = (jobId, buffer) =>
+    broker.connection.sendToQueue(serialize({ jobId, buffer }));
 
 /**
  * Sets image properties onto `obj` where
@@ -51,7 +52,7 @@ const sendToQueue = async (jobId, buffer) => {
  * @param {*} send
  * @returns {Promise<any>}
  */
-const setSize = async (obj, file, send) => {
+const setSize = (obj, file, send) => {
     const size = sizeOf(file.buffer);
     const uuid = uuidv4();
     obj.image = file;
@@ -59,11 +60,11 @@ const setSize = async (obj, file, send) => {
 
     if (size.width <= 140 && size.height <= 140) {
         obj.size = size;
-        return await Promise.resolve();
+        return Promise.resolve();
     } else {
         let buffer = obj.image.buffer;
         delete obj.image.buffer;
-        return await send(uuid, buffer);
+        return send(uuid, buffer);
     }
 };
 
@@ -113,7 +114,7 @@ const create = async (req, res) => {
                             return i;
                         })
                         .catch((err) => {
-                            handleInternal(err,res,log);
+                            handleInternal(err, res, log);
                             throw new Error(err);
                         });
                 })
@@ -122,13 +123,13 @@ const create = async (req, res) => {
                 });
         } catch (err) {
             handleInternal(err, res, log);
-            return await Promise.reject();
+            return Promise.reject();
         }
     } else {
         res.status(StatusCodes.BAD_REQUEST).send(
             malformedError("username is required")
         );
-        return await Promise.reject();
+        return Promise.reject();
     }
 };
 
@@ -138,13 +139,13 @@ const create = async (req, res) => {
  * @param {*} res
  * @returns {Promise<any>}
  */
-const findByUsername = async (req, res) => {
+const findByUsername = (req, res) => {
     if (req.params && req.params.username) {
         let username = req.params.username;
-        return await User.findOne({ username: username })
-            .then(async (u) => {
+        return User.findOne({ username: username })
+            .then((u) => {
                 if (u && (u.hasOwnProperty("_id") || u._id)) {
-                    return await Instant.find({ username: u._id })
+                    return Instant.find({ username: u._id })
                         .sort({ createdAt: "desc" })
                         .then((data) => {
                             res.status(StatusCodes.OK).send(data);
@@ -156,7 +157,7 @@ const findByUsername = async (req, res) => {
                 } else {
                     let data = [];
                     res.status(StatusCodes.OK).send(data);
-                    return await Promise.resolve(data);
+                    return Promise.resolve(data);
                 }
             })
             .catch((err) => handleInternal(err, res, log));
@@ -164,7 +165,7 @@ const findByUsername = async (req, res) => {
         res.status(StatusCodes.BAD_REQUEST).send(
             malformedError("username is required")
         );
-        return await Promise.reject();
+        return Promise.reject();
     }
 };
 
@@ -175,14 +176,13 @@ const findByUsername = async (req, res) => {
  * @param {*} res
  * @returns {Promise<any>}
  */
-const findAll = async (_, res) => {
-    return await Instant.find({})
+const findAll = (_, res) =>
+    Instant.find({})
         .sort({ createdAt: "desc" })
         .then((data) => {
             res.status(StatusCodes.OK).send(data);
             return data;
         })
         .catch((err) => handleInternal(err, res, log));
-};
 
 export const instantController = { create, findAll, findByUsername };

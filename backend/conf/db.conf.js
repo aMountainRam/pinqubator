@@ -19,7 +19,6 @@ const context = {
         useNewUrlParser: true,
         useUnifiedTopology: true,
         useFindAndModify: false,
-        useCreateIndex: true,
     },
 };
 mongoose.Promise = global.Promise;
