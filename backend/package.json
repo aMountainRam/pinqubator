@@ -9,8 +9,10 @@
     "main": "server.js",
     "type": "module",
     "scripts": {
-        "dev": "DOTENV_CONFIG_PATH=./.env.dev nodemon -r dotenv/config server.js",
-        "test": "DOTENV_CONFIG_PATH=./.env.test mocha --config \"./test/.mocharc.json\""
+        "dev": "bash ./sh/run-dev.sh",
+        "idev": "DOTENV_CONFIG_PATH=./.env.dev nodemon -r dotenv/config server.js",
+		"test": "bash ./sh/run-tests.sh",
+        "itest": "DOTENV_CONFIG_PATH=./.env.test mocha --config \"./test/.mocharc.json\""
     },
     "author": "Umberto Toniolo <amountainram@gmail.com>",
     "license": "ISC",

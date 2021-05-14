@@ -172,4 +172,4 @@ which are almost singletons, instead of instantiating each time a service. Tests
 There's then a single DB connection and a single broker connection incapsulated in an EventEmitter class extension.
 
 
-Enjoy!!
+Done!!
