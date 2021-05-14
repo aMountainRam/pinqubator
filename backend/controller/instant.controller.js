@@ -36,37 +36,8 @@ const setLocation = (obj, { lat, long }) => {
  * @returns {Promise<any>}
  */
 const sendToQueue = (jobId, buffer) =>
-    broker.connection.sendToQueue(serialize({ jobId, buffer }));
+    broker.connection.sendToQueue(serialize({ jobId, buffer }))
 
-/**
- * Sets image properties onto `obj` where
- * the image is given into `files` with a given
- * buffer. On return such buffer is sent via `sent`
- * to a broker for a resize job.
- *
- * Resize job is triggered only when either image dimension
- * is larger than 140 pixels.
- *
- * @param {*} obj
- * @param {*} file
- * @param {*} send
- * @returns {Promise<any>}
- */
-const setSize = (obj, file, send) => {
-    const size = sizeOf(file.buffer);
-    const uuid = uuidv4();
-    obj.image = file;
-    obj.image.jobId = uuid;
-
-    if (size.width <= 140 && size.height <= 140) {
-        obj.size = size;
-        return Promise.resolve();
-    } else {
-        let buffer = obj.image.buffer;
-        delete obj.image.buffer;
-        return send(uuid, buffer);
-    }
-};
 
 /**
  * Create an instant. The request must contain:
@@ -101,24 +72,40 @@ const create = async (req, res) => {
                     )
                 );
 
+            setLocation(instaObj, req.body);
             // compute image size
-            return await setSize(instaObj, req.files[0], sendToQueue)
-                .then(() => {
-                    // handle geolocation
-                    setLocation(instaObj, req.body);
-                    let instant = new Instant(instaObj);
-                    return instant
-                        .save(instant)
-                        .then((i) => {
-                            res.status(StatusCodes.OK).send();
-                            return i;
-                        })
-                        .catch((err) => {
-                            handleInternal(err, res, log);
-                            throw new Error(err);
-                        });
+            let file = req.files[0];
+            const size = sizeOf(file.buffer);
+            const uuid = uuidv4();
+            instaObj.image = file;
+            instaObj.image.jobId = uuid;
+
+            let rescale = false;
+            let buffer = undefined;
+            if (size.width <= 140 && size.height <= 140) {
+                instaObj.size = size;
+            } else {
+                rescale = true;
+                buffer = instaObj.image.buffer;
+                delete instaObj.image.buffer;
+            }
+            Instant.create(instaObj)
+                .then((i) => {
+                    // send here
+                    rescale
+                        ? sendToQueue(uuid, buffer)
+                              .then(() => res.status(StatusCodes.OK).send())
+                              .catch((err) => {
+                                  // dont send
+                                  handleInternal(err, res, log);
+                                  throw new Error(err);
+                              })
+                        : res.status(StatusCodes.OK).send();
+                    return i;
                 })
                 .catch((err) => {
+                    // dont send
+                    handleInternal(err, res, log);
                     throw new Error(err);
                 });
         } catch (err) {
@@ -144,7 +131,7 @@ const findByUsername = (req, res) => {
         let username = req.params.username;
         return User.findOne({ username: username })
             .then((u) => {
-                if (u && (u.hasOwnProperty("_id") || u._id)) {
+                if (u && (u._id || u.hasOwnProperty("_id"))) {
                     return Instant.find({ username: u._id })
                         .sort({ createdAt: "desc" })
                         .then((data) => {

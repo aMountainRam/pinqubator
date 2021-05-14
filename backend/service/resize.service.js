@@ -1,7 +1,10 @@
+import { EventEmitter } from "events";
 import sharp from "sharp";
 import sizeOf from "image-size";
 import log4js from "log4js";
 import { Instant } from "../model/instant.model.js";
+
+export const resizeEvent = new EventEmitter();
 
 const log = log4js.getLogger("default");
 
@@ -38,7 +41,11 @@ export const resize = (
                 Instant.findOneAndUpdate(
                     { "image.jobId": msg.jobId },
                     { "image.buffer": buffer, size: size }
-                ).catch((err) => log.error(err));
+                )
+                    .then(() => {
+                        resizeEvent.emit("saved", msg.jobId);
+                    })
+                    .catch((err) => log.error(err));
             } catch (err) {
                 log.error(err);
                 return Promise.reject(err);

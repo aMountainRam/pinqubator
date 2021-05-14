@@ -22,7 +22,7 @@ describe("CRUD operations on 'users'", () => {
             done();
         });
     });
-    it("should not create a user twice", (done) => {
+    it("should not create a user twice, test on unique index", (done) => {
         User.create({ username: "a" })
             .then(() => {
                 extCount = 1;

@@ -6,22 +6,18 @@ import httpsServer from "../../../service/https.server.service.js";
 import fs from "fs";
 import { StatusCodes } from "http-status-codes";
 import { Instant } from "../../../model/instant.model.js";
-import { stubs } from "../../test.config.js";
+import { User } from "../../../model/user.model.js";
 chai.use(chaiHttp);
 const any = sinon.match.any;
 
 describe("inspect instant controller", () => {
     beforeEach("assert db",(done) => {
-        sinon.createSandbox();
         expect(mongoose.connection).to.not.be.undefined;
         done();
     });
-    afterEach(() => {
-        sinon.restore();
-    })
     describe("POST instant", () => {
         let currentInstants = 0;
-        stubs.userfind.stub
+        sinon.stub(User,"find")
             .withArgs(any)
             .resolves({ _id: mongoose.Types.ObjectId().toHexString() });
         beforeEach("checks documents in instants", (done) => {

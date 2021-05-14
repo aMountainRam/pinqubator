@@ -1,0 +1,86 @@
+import fs from "fs";
+import httpsServer from "../../../service/https.server.service.js";
+import chai, { expect } from "chai";
+import chaiHttp from "chai-http";
+import { User } from "../../../model/user.model.js";
+import { Instant } from "../../../model/instant.model.js";
+import { StatusCodes } from "http-status-codes";
+import { resizeEvent } from "../../../service/resize.service.js";
+import broker from "../../../service/broker.service.js";
+
+chai.use(chaiHttp);
+function getRandomInRange(from, to, fixed) {
+    return (Math.random() * (to - from) + from).toFixed(fixed) * 1;
+    // .toFixed() returns string, so ' * 1' is a trick to convert to number
+}
+const file = fs.readFileSync("test/resources/big_pic.png");
+const num = 20;
+const requests = [];
+Array(num)
+    .fill(0)
+    .forEach(function (_, i) {
+        this[i] = {
+            title: `title${i}`,
+            username: `username${i < 5 ? 0 : 1}`,
+            lat: getRandomInRange(-90, 90, 3).toString(),
+            long: getRandomInRange(-180, 180, 3).toString(),
+        };
+    }, requests);
+
+describe(`import of ${num} instants simoultaneously`, () => {
+    let count = 0;
+    before("reset users and instants tables", (done) => {
+        resizeEvent.on("saved", (jobId) => {
+            console.log(`Scheduled job: ${jobId}`);
+            count++;
+            if (count === num) {
+                resizeEvent.emit("doneCounting");
+            }
+        });
+        if (Instant.find.restore) {
+            Instant.find.restore();
+        }
+        if (Instant.findOneAndUpdate.restore) {
+            Instant.findOneAndUpdate.restore();
+        }
+        User.deleteMany({}).then(() => {
+            Instant.deleteMany({}).then(() => {
+                if (broker.connection.consumer) {
+                    done();
+                } else {
+                    broker.connection.on("consuming", (queue) => {
+                        done();
+
+                        console.log(`Consuming on queue: ${queue}`);
+                    });
+                }
+            });
+        });
+    });
+    after("check whether users and instants were created", (done) => {
+        User.countDocuments({}, (_1, count1) => {
+            expect(count1).to.equal(2);
+            Instant.countDocuments({}, (_2, count2) => {
+                expect(count2).to.equal(num);
+            });
+            done();
+        });
+    });
+    it("runs the http requests and listens for the resize emitter", (done) => {
+        requests.forEach((req) =>
+            chai
+                .request(httpsServer)
+                .post("/api/instants")
+                .set("Content-Type", "multipart/form-data")
+                .type("form")
+                .field(req)
+                .attach("image", file, "big_pic.png")
+                .end(async (_1, res) => {
+                    expect(res.status).to.equal(StatusCodes.OK);
+                    expect(res.body).to.be.empty;
+                    console.log(req.title);
+                })
+        );
+        resizeEvent.once("doneCounting", () => done());
+    });
+});

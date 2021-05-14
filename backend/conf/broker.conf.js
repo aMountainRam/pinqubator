@@ -20,4 +20,6 @@ broker.connection
     .on("consuming", (queue) => log.info(`Consumer started on queue ${queue}`));
 
 broker.connect(context, sslContext);
-broker.connection.registerConsumer((msg) => resize(deserialize(msg)));
+broker.connection.registerConsumer((msg) => {
+    resize(deserialize(msg));
+});

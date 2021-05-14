@@ -15,6 +15,7 @@ services:
     broker:
         hostname: broker.pinqubator.com
         ports:
+            - 15672:15672
             - 5671:5671
         networks:
             - backend-network

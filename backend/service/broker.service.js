@@ -49,7 +49,7 @@ export class BrokerConnection extends EventEmitter {
         this.connection.createChannel().then(function (ch) {
             ch.assertQueue(queue, { durable: false }).then(function (_qok) {
                 emitter.emit("consuming", queue);
-                return ch.consume(queue, callback, { noAck: true });
+                return ch.consume(queue, callback, { noAck: false });
             });
         });
     registerConsumer(callback) {
